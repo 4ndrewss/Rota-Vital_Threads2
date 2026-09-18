@@ -4,9 +4,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.stereotype.Service;
+
 import io.github._ndrewss.rota_vital.model.EstatisticaHospital;
 import io.github._ndrewss.rota_vital.model.Requisicao;
 
+@Service
 public class EstatisticaService {
     public Map<String, EstatisticaHospital> calcularSequencial(List<Requisicao> requisicoes){
         Map<String, EstatisticaHospital> mapaEstatisticas = new HashMap<>();
