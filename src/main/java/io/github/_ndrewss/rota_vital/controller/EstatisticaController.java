@@ -51,4 +51,33 @@ public class EstatisticaController {
 
         return resposta;
     }
+
+    // Exemplo de chamada: GET http://localhost:8080/estatisticas/paralelo?tamanho=100000&threads=4
+    @GetMapping("/estatisticas/paralelo")
+    public Map<String, Object> calcularParalelo(@RequestParam int tamanho, @RequestParam int threads) {
+
+        // 1. Gera os dados fake
+        List<Requisicao> requisicoes = GeradorRequisicoes.gerar(tamanho);
+
+        // 2. Marca o tempo ANTES de começar o processamento
+        long inicio = System.nanoTime();
+
+        // 3. Roda a versão paralela, dividindo o trabalho em "threads" pedaços
+        Map<String, EstatisticaHospital> resultado = estatisticaService.calcularParalelo(requisicoes, threads);
+
+        // 4. Marca o tempo DEPOIS que terminou
+        long fim = System.nanoTime();
+
+        // 5. Calcula quanto tempo levou, em milissegundos
+        long tempoGastoMs = (fim - inicio) / 1_000_000;
+
+        // 6. Monta a resposta que vai virar JSON
+        Map<String, Object> resposta = new java.util.HashMap<>();
+        resposta.put("threads", threads);
+        resposta.put("tempoGastoMs", tempoGastoMs);
+        resposta.put("totalHospitais", resultado.size());
+        resposta.put("resultado", resultado);
+
+        return resposta;
+    }
 }

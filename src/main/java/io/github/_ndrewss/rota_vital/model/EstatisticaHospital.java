@@ -15,6 +15,12 @@ public class EstatisticaHospital {
         somaTempoAtendimento = somaTempoAtendimento + tempoAtendimento;
     }
 
+    /** Soma os totais de outra estatística parcial do mesmo hospital (usado na agregação paralela). */
+    public void somar(EstatisticaHospital outra){
+        totalRequisicoes = totalRequisicoes + outra.totalRequisicoes;
+        somaTempoAtendimento = somaTempoAtendimento + outra.somaTempoAtendimento;
+    }
+
     public Long getMedia(){
         return somaTempoAtendimento / totalRequisicoes;
     }
