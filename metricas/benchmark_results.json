@@ -1,0 +1,94 @@
+{
+  "100000": {
+    "1": {
+      "nome": "Sequencial (1 thread)",
+      "rodadas": [
+        9,
+        7,
+        4,
+        12,
+        7
+      ],
+      "media": 7.8
+    },
+    "2": {
+      "nome": "Paralelo (2 threads)",
+      "rodadas": [
+        7,
+        8,
+        6,
+        6,
+        25
+      ],
+      "media": 10.4
+    },
+    "4": {
+      "nome": "Paralelo (4 threads)",
+      "rodadas": [
+        7,
+        4,
+        3,
+        4,
+        22
+      ],
+      "media": 8.0
+    },
+    "8": {
+      "nome": "Paralelo (8 threads)",
+      "rodadas": [
+        4,
+        5,
+        4,
+        4,
+        3
+      ],
+      "media": 4.0
+    }
+  },
+  "1000000": {
+    "1": {
+      "nome": "Sequencial (1 thread)",
+      "rodadas": [
+        283,
+        513,
+        202,
+        92,
+        159
+      ],
+      "media": 249.8
+    },
+    "2": {
+      "nome": "Paralelo (2 threads)",
+      "rodadas": [
+        185,
+        92,
+        96,
+        137,
+        234
+      ],
+      "media": 148.8
+    },
+    "4": {
+      "nome": "Paralelo (4 threads)",
+      "rodadas": [
+        50,
+        232,
+        51,
+        49,
+        60
+      ],
+      "media": 88.4
+    },
+    "8": {
+      "nome": "Paralelo (8 threads)",
+      "rodadas": [
+        167,
+        24,
+        36,
+        72,
+        18
+      ],
+      "media": 63.4
+    }
+  }
+}

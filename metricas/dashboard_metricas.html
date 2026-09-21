@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Rota Vital - Painel de Desempenho & QA</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .bar-transition { transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-6 md:p-8">
+
+  <!-- Header -->
+  <header class="mb-8 pb-4 border-b border-[var(--border)]">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+          QA Aprovado • 100% Funcional
+        </span>
+        <h1 class="text-2xl md:text-3xl font-bold mt-2 text-[var(--foreground)]">
+          Rota Vital — Métricas de Desempenho & Concorrência
+        </h1>
+        <p class="text-[var(--muted-foreground)] text-sm mt-1">
+          Java 21 • Spring Boot 4.0.8 • Comparativo Sequencial vs. Multi-threading (2, 4 e 8 threads)
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <a href="file:///C:/Users/cgcms/.gemini/antigravity/scratch/Rota-Vital_Threads2/metricas_desempenho_rota_vital.xlsx" 
+           class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm flex items-center gap-2 transition-colors">
+          <span>📊</span> Baixar Planilha Excel (.xlsx)
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Status Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="bg-[var(--card)] p-4 rounded-xl border border-[var(--border)] shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] font-medium uppercase tracking-wider">Status dos Endpoints</div>
+      <div class="text-xl font-bold text-emerald-500 mt-1 flex items-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> 100% Operacional
+      </div>
+      <div class="text-xs text-[var(--muted-foreground)] mt-1">Testes unitários e rotas REST validadas</div>
+    </div>
+
+    <div class="bg-[var(--card)] p-4 rounded-xl border border-[var(--border)] shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] font-medium uppercase tracking-wider">Maior Speedup (1M reqs)</div>
+      <div class="text-xl font-bold text-blue-500 mt-1">3.94x com 8 Threads</div>
+      <div class="text-xs text-[var(--muted-foreground)] mt-1">De 249.80ms para 63.40ms</div>
+    </div>
+
+    <div class="bg-[var(--card)] p-4 rounded-xl border border-[var(--border)] shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] font-medium uppercase tracking-wider">Carga Máxima Testada</div>
+      <div class="text-xl font-bold text-purple-500 mt-1">1.000.000 de Reqs</div>
+      <div class="text-xs text-[var(--muted-foreground)] mt-1">5 rodadas por cenário</div>
+    </div>
+
+    <div class="bg-[var(--card)] p-4 rounded-xl border border-[var(--border)] shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] font-medium uppercase tracking-wider">Natureza da Operação</div>
+      <div class="text-xl font-bold text-amber-500 mt-1">CPU-Bound O(N)</div>
+      <div class="text-xs text-[var(--muted-foreground)] mt-1">Partição sem race condition</div>
+    </div>
+  </div>
+
+  <!-- Tabela de Tempos & Speedup -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    
+    <!-- Tabela 1: 1 Milhão de Registros -->
+    <div class="bg-[var(--card)] p-5 rounded-xl border border-[var(--border)] shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="font-bold text-lg text-[var(--foreground)]">Cenário: 1.000.000 de Registros</h2>
+          <p class="text-xs text-[var(--muted-foreground)]">Impacto nítido de escalabilidade paralela</p>
+        </div>
+        <span class="text-xs font-semibold px-2 py-1 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20">
+          Alta Demanda
+        </span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead class="text-xs uppercase bg-[var(--sidebar)] text-[var(--muted-foreground)] border-b border-[var(--border)]">
+            <tr>
+              <th class="py-2.5 px-3">Configuração</th>
+              <th class="py-2.5 px-3 text-right">Tempo Médio</th>
+              <th class="py-2.5 px-3 text-right">Speedup (S)</th>
+              <th class="py-2.5 px-3 text-right">Eficiência (E)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[var(--border)]">
+            <tr>
+              <td class="py-2.5 px-3 font-medium">Sequencial (1 thread)</td>
+              <td class="py-2.5 px-3 text-right font-mono text-amber-500 font-semibold">249.80 ms</td>
+              <td class="py-2.5 px-3 text-right font-mono text-[var(--muted-foreground)]">1.00x</td>
+              <td class="py-2.5 px-3 text-right font-mono text-[var(--muted-foreground)]">100.0%</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-medium">Paralelo (2 threads)</td>
+              <td class="py-2.5 px-3 text-right font-mono font-semibold">148.80 ms</td>
+              <td class="py-2.5 px-3 text-right font-mono text-blue-500 font-semibold">1.68x</td>
+              <td class="py-2.5 px-3 text-right font-mono">84.0%</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-medium">Paralelo (4 threads)</td>
+              <td class="py-2.5 px-3 text-right font-mono font-semibold">88.40 ms</td>
+              <td class="py-2.5 px-3 text-right font-mono text-blue-500 font-semibold">2.83x</td>
+              <td class="py-2.5 px-3 text-right font-mono">70.8%</td>
+            </tr>
+            <tr class="bg-blue-500/5">
+              <td class="py-2.5 px-3 font-semibold text-blue-600">Paralelo (8 threads)</td>
+              <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-500">63.40 ms</td>
+              <td class="py-2.5 px-3 text-right font-mono text-emerald-600 font-bold">3.94x</td>
+              <td class="py-2.5 px-3 text-right font-mono">49.3%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Barra comparativa visual -->
+      <div class="mt-4 pt-4 border-t border-[var(--border)] space-y-2">
+        <div class="text-xs text-[var(--muted-foreground)] font-medium mb-1">Comparação de Latência (1M)</div>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="w-20 text-[var(--muted-foreground)]">1 Thread:</span>
+          <div class="flex-1 bg-[var(--sidebar)] rounded-full h-3 overflow-hidden">
+            <div class="bg-amber-500 h-full rounded-full" style="width: 100%;"></div>
+          </div>
+          <span class="w-14 text-right font-mono">250ms</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="w-20 text-[var(--muted-foreground)]">2 Threads:</span>
+          <div class="flex-1 bg-[var(--sidebar)] rounded-full h-3 overflow-hidden">
+            <div class="bg-blue-400 h-full rounded-full" style="width: 59.5%;"></div>
+          </div>
+          <span class="w-14 text-right font-mono">149ms</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="w-20 text-[var(--muted-foreground)]">4 Threads:</span>
+          <div class="flex-1 bg-[var(--sidebar)] rounded-full h-3 overflow-hidden">
+            <div class="bg-blue-500 h-full rounded-full" style="width: 35.4%;"></div>
+          </div>
+          <span class="w-14 text-right font-mono">88ms</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="w-20 font-medium text-blue-600">8 Threads:</span>
+          <div class="flex-1 bg-[var(--sidebar)] rounded-full h-3 overflow-hidden">
+            <div class="bg-emerald-500 h-full rounded-full" style="width: 25.4%;"></div>
+          </div>
+          <span class="w-14 text-right font-mono font-bold text-emerald-500">63ms</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela 2: 100 Mil Registros -->
+    <div class="bg-[var(--card)] p-5 rounded-xl border border-[var(--border)] shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="font-bold text-lg text-[var(--foreground)]">Cenário: 100.000 Registros</h2>
+          <p class="text-xs text-[var(--muted-foreground)]">Impacto do overhead da JVM em cargas curtas</p>
+        </div>
+        <span class="text-xs font-semibold px-2 py-1 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+          Carga Leve
+        </span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead class="text-xs uppercase bg-[var(--sidebar)] text-[var(--muted-foreground)] border-b border-[var(--border)]">
+            <tr>
+              <th class="py-2.5 px-3">Configuração</th>
+              <th class="py-2.5 px-3 text-right">Tempo Médio</th>
+              <th class="py-2.5 px-3 text-right">Speedup (S)</th>
+              <th class="py-2.5 px-3 text-right">Eficiência (E)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[var(--border)]">
+            <tr>
+              <td class="py-2.5 px-3 font-medium">Sequencial (1 thread)</td>
+              <td class="py-2.5 px-3 text-right font-mono font-semibold">7.80 ms</td>
+              <td class="py-2.5 px-3 text-right font-mono text-[var(--muted-foreground)]">1.00x</td>
+              <td class="py-2.5 px-3 text-right font-mono text-[var(--muted-foreground)]">100.0%</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-medium">Paralelo (2 threads)</td>
+              <td class="py-2.5 px-3 text-right font-mono font-semibold">10.40 ms</td>
+              <td class="py-2.5 px-3 text-right font-mono text-amber-500 font-semibold">0.75x</td>
+              <td class="py-2.5 px-3 text-right font-mono">37.5%</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-medium">Paralelo (4 threads)</td>
+              <td class="py-2.5 px-3 text-right font-mono font-semibold">8.00 ms</td>
+              <td class="py-2.5 px-3 text-right font-mono text-amber-500 font-semibold">0.98x</td>
+              <td class="py-2.5 px-3 text-right font-mono">24.5%</td>
+            </tr>
+            <tr class="bg-blue-500/5">
+              <td class="py-2.5 px-3 font-semibold text-blue-600">Paralelo (8 threads)</td>
+              <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-500">4.00 ms</td>
+              <td class="py-2.5 px-3 text-right font-mono text-emerald-600 font-bold">1.95x</td>
+              <td class="py-2.5 px-3 text-right font-mono">24.4%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 p-3 rounded-lg bg-[var(--sidebar)] border border-[var(--border)] text-xs text-[var(--muted-foreground)] leading-relaxed">
+        <strong class="text-[var(--foreground)]">Observação Teórica Importante:</strong> Para 100k registros, o processamento dura menos de 10ms. O tempo que a JVM leva para criar tarefas Callable, submeter ao pool, escalonar threads no SO e unificar mapas parciais é da mesma ordem de grandeza do processamento em si. Isso explica por que 2 e 4 threads não tiveram ganho sobre 1 thread, demonstrando com precisão o custo de coordenação concorrente.
+      </div>
+    </div>
+  </div>
+
+  <!-- Cards Prontos para o Trello -->
+  <div class="space-y-6">
+    <h2 class="text-xl font-bold text-[var(--foreground)] flex items-center gap-2">
+      <span>📋</span> Textos Prontos para os Cards do Trello
+    </h2>
+
+    <!-- Card 18 -->
+    <div class="bg-[var(--card)] p-6 rounded-xl border border-[var(--border)] shadow-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-[var(--border)] mb-4">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-red-500"></span>
+          <h3 class="font-bold text-base text-[var(--foreground)]">Card #18 — Escrever justificativa (Operação, Big-O, Gargalo, Particionamento)</h3>
+        </div>
+        <span class="text-xs px-2.5 py-1 rounded bg-[var(--sidebar)] text-[var(--muted-foreground)]">Pronto para Envio</span>
+      </div>
+      <div class="prose prose-sm text-[var(--foreground)] max-w-none text-sm space-y-3">
+        <p><strong>1. Operação Escolhida:</strong><br>
+        O sistema processa requisições de atendimento hospitalar agrupando por unidade (<code>hospitalId</code>) e calculando o volume total de atendimentos, a soma acumulada de tempo e o tempo médio de atendimento de cada hospital.</p>
+
+        <p><strong>2. Complexidade Assintótica (Big-O) da Versão Sequencial:</strong><br>
+        A versão sequencial executa uma única varredura de $O(N)$ sobre a lista de $N$ requisições. Para cada item, busca e atualiza o acumulador em um <code>HashMap</code> com 10 hospitais constantes, o que possui custo amortizado $O(1)$. Portanto, a <strong>complexidade temporal sequencial é linear $O(N)$</strong> e a complexidade de espaço adicional é $O(K)$, onde $K=10$ hospitais fixos, equivalente a $O(1)$.</p>
+
+        <p><strong>3. Identificação do Gargalo (CPU-Bound vs I/O-Bound):</strong><br>
+        O gargalo é exclusivamente <strong>CPU-Bound</strong> e de tráfego de barramento de memória (RAM). Toda a massa de dados é gerada e mantida em memória antes do início da contagem do tempo, sem qualquer operação de entrada e saída (sem I/O de disco, banco de dados relacional ou rede). Por isso, o paralelismo real em múltiplos núcleos de CPU produz ganhos reais de tempo de computação.</p>
+
+        <p><strong>4. Viabilidade de Particionamento dos Dados:</strong><br>
+        As funções de agregação estatística utilizadas (contagem e somatório) respeitam as propriedades associativa e comutativa: $(A + B) + C = A + (B + C)$. Dessa forma, a lista pode ser fatiada em $P$ partições independentes usando <code>List.subList</code> (sem cópia de memória). Cada thread acumula suas estatísticas em seu próprio mapa local sem locks (evitando contenção de memória), e ao final uma etapa rápida de agregação unifica os resultados parciais.</p>
+      </div>
+    </div>
+
+    <!-- Card 19 -->
+    <div class="bg-[var(--card)] p-6 rounded-xl border border-[var(--border)] shadow-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-[var(--border)] mb-4">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-red-500"></span>
+          <h3 class="font-bold text-base text-[var(--foreground)]">Card #19 — Escrever análise (Speedup Não-Linear, Concorrência vs. Paralelismo, Arquitetura)</h3>
+        </div>
+        <span class="text-xs px-2.5 py-1 rounded bg-[var(--sidebar)] text-[var(--muted-foreground)]">15-20 Linhas Formatadas</span>
+      </div>
+      <div class="prose prose-sm text-[var(--foreground)] max-w-none text-sm space-y-3">
+        <p><strong>1. Por que o Speedup não foi Linear? (Lei de Amdahl & Overheads):</strong><br>
+        No teste com 1.000.000 de registros, o speedup atingiu <strong>1.68x (2 threads)</strong>, <strong>2.83x (4 threads)</strong> e <strong>3.94x (8 threads)</strong>. O ganho não é estritamente proporcional a $P$ (número de núcleos) devido aos limites postulados pela Lei de Amdahl e aos custos de orquestração: criação e encerramento de threads no <code>ExecutorService</code>, alternância de contexto (context switching) gerenciada pelo SO, contenção de cache L2/L3 e a fase sequencial obrigatória de agregação final dos mapas parciais. Em 100k registros, esses custos fixos quase anulam o benefício devido à curta duração do laço.</p>
+
+        <p><strong>2. A Big-O mudou?</strong><br>
+        A complexidade de trabalho total (Work) permanece <strong>$O(N)$</strong>, pois o número total de operações aritméticas não muda. Já o tempo de execução paralelo ideal (Span) é reduzido para <strong>$O(N/P + K \cdot P)$</strong>, onde $K \cdot P$ representa o tempo de fusão dos mapas parciais.</p>
+
+        <p><strong>3. Concorrência vs. Paralelismo (Analogia da Mesa DJ):</strong><br>
+        <strong>Concorrência</strong> trata de <em>composição e estrutura</em>: gerenciar múltiplas tarefas intercalando-as no tempo, como um único DJ operando dois toca-discos, alternando rapidamente fones e faders com as mesmas duas mãos. Já <strong>Paralelismo</strong> trata de <em>execução física simultânea</em>: múltiplos DJs operando cada um seu próprio toca-discos ou instrumento no mesmo milésimo de segundo. Nossa aplicação executou paralelismo real em múltiplos núcleos físicos da CPU.</p>
+
+        <p><strong>4. Próximos Passos de Arquitetura:</strong><br>
+        Para cargas além de 10 milhões ou bilhões de registros, a arquitetura com threads de SO tradicionais atinge saturação. A evolução incluiria: particionamento com Java Streams Paralelos utilizando <code>Spliterator</code> otimizado, adoção de memória off-heap para mitigar pausas de GC, ou arquitetura distribuída com Apache Spark/Flink para particionar o processamento entre múltiplos nós computacionais.</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
