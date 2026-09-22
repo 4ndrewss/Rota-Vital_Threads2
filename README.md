@@ -13,6 +13,7 @@ Os testes utilizam cargas de 100 mil e 1 milhão de requisições, processadas c
 
 Requisitos: Java 21, Spring Boot 4.0.8 e Maven Wrapper incluso no projeto.
 
+```bash
 # iniciar a aplicação
 ./mvnw spring-boot:run
 
@@ -21,11 +22,21 @@ Requisitos: Java 21, Spring Boot 4.0.8 e Maven Wrapper incluso no projeto.
 
 # executar os testes
 ./mvnw test
+```
 
-No Windows, utilize mvnw.cmd no lugar de ./mvnw.
+No Windows, utilize `mvnw.cmd` no lugar de `./mvnw`.
 
 💡 Gerar 1 milhão de requisições pode consumir entre 150 e 200 MB de heap.
-Caso ocorra OutOfMemoryError, execute a aplicação com -Xmx2g.
+Caso ocorra `OutOfMemoryError`, execute a aplicação com `-Xmx2g`.
+
+---
+
+## ✅ Escopo entregue
+
+- Cálculo de estatísticas por hospital (sequencial e paralelo)
+- Divisão de carga entre threads com junção dos resultados parciais
+- Endpoints REST para as duas versões, com tempo de resposta medido
+- Comparação de desempenho documentada no relatório técnico
 
 ---
 
@@ -43,7 +54,6 @@ src/main/java/io/github/_ndrewss/rota_vital/
 │   └── EstatisticaService.java     # cálculo das estatísticas + divisão da carga
 └── util/
     └── GeradorRequisicoes.java     # gerador de massa de dados fake
-
 ```
 
 ### `Requisicao`
@@ -66,12 +76,20 @@ construtor completo, getters/setters, `equals`/`hashCode` e `toString`.
 Expõe o processamento via HTTP e já devolve o tempo gasto, que é o número que
 interessa para a comparação.
 
-```
+**Versão sequencial**
+
+```http
 GET /estatisticas/sequencial?tamanho=100000
 ```
 
-Gera a massa de dados, roda `calcularSequencial` cronometrando com `System.nanoTime()`
-e responde:
+**Versão paralela**
+
+```http
+GET /estatisticas/paralelo?tamanho=100000&threads=4
+```
+
+Ambas geram a massa de dados, rodam o processamento correspondente cronometrando com
+`System.nanoTime()` e respondem no mesmo formato:
 
 ```json
 {
@@ -86,21 +104,14 @@ e responde:
   }
 }
 ```
-## 🛣️Roadmap
 
-- [x] `Requisicao` (POJO)
-- [x] Gerador de dados fake (100 mil / 1 milhão)
-- [x] `EstatisticaHospital` (acumulador por hospital)
-- [x] Processamento sequencial das estatísticas
-- [x] Divisão da lista em pedaços para as threads
-- [ ] Processamento com threads (juntar os resultados parciais)
-- [ ] Comparação de tempos entre as duas abordagens
-- [ ] Exposição dos resultados via endpoint REST — falta o endpoint da versão com threads
 O tempo medido cobre **só o processamento** — a geração dos dados fica de fora.
 
 > Hoje o endpoint chama `GeradorRequisicoes.gerar(tamanho)` sem semente, então cada
 > chamada trabalha sobre uma massa diferente. Para comparar sequencial vs. threads de
 > forma justa, vale passar uma semente fixa.
+
+---
 
 ## 👥 Membros da Equipe
 
@@ -113,19 +124,28 @@ O tempo medido cobre **só o processamento** — a geração dos dados fica de f
 | Glauco Santos| [@glaucosantos002](https://github.com/glaucosantos002) |
 | Gustavo Veloso | [@velosogustavo](https://github.com/velosogustavo) |
 
+---
+
 ## 📌 Gestão e Organização
 
-O acompanhamento das etapas de construção da mesa de DJ, a divisão técnica da equipe e o backlog
+O acompanhamento das etapas de construção do Rota Vital, a divisão técnica da equipe e o backlog
 do projeto foram gerenciados via Trello.
 
 📋 **Acesso ao Quadro:** [Acessar Trello da Equipe](https://trello.com/b/nTGVCC8F/rota-vitalthreads2)
 
 <img width="1914" height="846" alt="image" src="https://github.com/user-attachments/assets/c060417c-996a-44bd-a18e-3e4e4f50c8f5" />
 
-## Convenções
+---
+
+## 📋 Convenções
 
 - Tempos de atendimento sempre em **milissegundos**.
 - Código e comentários em português.
 - Indentação com tab, seguindo o padrão que o Spring Initializr gerou.
 
+---
 
+## 📄 Relatório Técnico
+
+O relatório completo com justificativa, metodologia, resultados e análise está disponível em:
+[`relatorio_rota_vital.pdf`](./docs/relatorio_rota_vital.pdf)
