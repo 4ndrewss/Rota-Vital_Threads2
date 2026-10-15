@@ -1,6 +1,6 @@
 # PI — regras nascem dos testes
 
-Este documento acompanha o PI: o story map está no [README](../README.md#️-story-map-do-pi) e
+Este documento acompanha o PI: o story map está no [README](../README.md) e
 aqui ficam as histórias da Release 1 quebradas em tarefas. O fluxo de commits segue o
 [CONTRIBUTING](../CONTRIBUTING.md): primeiro o commit `test:` (o teste que ainda falha), depois
 o commit `feat:` (o código que faz passar).
