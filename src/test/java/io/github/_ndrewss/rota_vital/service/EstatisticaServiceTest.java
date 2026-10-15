@@ -1,6 +1,7 @@
 package io.github._ndrewss.rota_vital.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,18 @@ class EstatisticaServiceTest {
         Map<String, EstatisticaHospital> resultadoParalelo = service.calcularParalelo(requisicoes, 7);
 
         assertEstatisticasIguais(resultadoSequencial, resultadoParalelo);
+    }
+
+    // H1 / T1.1 — regra: threads precisa ser maior que zero
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1})
+    void paraleloComThreadsMenorOuIgualAZeroDeveLancarIllegalArgumentException(int numThreads) {
+        List<Requisicao> requisicoes = GeradorRequisicoes.gerar(1_000, 42L);
+
+        IllegalArgumentException erro = assertThrows(IllegalArgumentException.class,
+                () -> service.calcularParalelo(requisicoes, numThreads));
+
+        assertEquals("threads deve ser maior que zero", erro.getMessage());
     }
 
     /**
