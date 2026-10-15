@@ -9,28 +9,31 @@ porque ele também é parte da entrega (fluxo de branch, histórico de commits e
 | --- | --- |
 | Java 21 | compilar e rodar a aplicação |
 | Git | versionamento |
-| Docker | **só** para rodar a aplicação localmente (sobe o PostgreSQL) |
+| Docker | rodar a aplicação localmente (API + PostgreSQL) |
 
 O Maven já vem no projeto (`./mvnw`, ou `mvnw.cmd` no Windows), não precisa instalar.
 
 ## 2. Rodando localmente
 
-Subir o banco (PostgreSQL) em um container:
+Tudo pelo Docker Compose (API + PostgreSQL):
+
+```bash
+cp .env.example .env          # só na 1ª vez
+docker compose up -d --build
+```
+
+A API fica em `http://localhost:8080`. Detalhes (variáveis, volume, decisões) no
+[README](./README.md#-como-executar-com-docker).
+
+**Rodando a API pela IDE / `./mvnw`** (para debugar): a aplicação espera um PostgreSQL em
+`localhost:5432`. Suba só um banco avulso:
 
 ```bash
 docker run --name rotavital-db -e POSTGRES_DB=rotavital -e POSTGRES_USER=rotavital -e POSTGRES_PASSWORD=rotavital -p 5432:5432 -d postgres:16
-```
-
-Nas próximas vezes, basta `docker start rotavital-db`.
-
-Depois, a aplicação:
-
-```bash
 ./mvnw spring-boot:run
 ```
 
-> Quando o `compose.yaml` (E1) estiver pronto, este passo passa a ser `docker compose up -d --build`
-> e esta seção deve ser atualizada.
+Nas próximas vezes, basta `docker start rotavital-db`.
 
 As credenciais acima são **apenas para desenvolvimento local**. Nenhum segredo real entra no repositório.
 
