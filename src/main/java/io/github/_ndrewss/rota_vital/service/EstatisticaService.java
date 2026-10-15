@@ -103,6 +103,12 @@ public class EstatisticaService {
      * próprio mapa parcial) e no final agrega os mapas parciais num único mapa.
      */
     public Map<String, EstatisticaHospital> calcularParalelo(List<Requisicao> requisicoes, int numThreads) {
+        // Valida antes de qualquer conta: com 0 threads a divisão da lista estourava
+        // ArithmeticException (divisão por zero), que virava erro 500 na API.
+        if (numThreads <= 0) {
+            throw new IllegalArgumentException("threads deve ser maior que zero");
+        }
+
         List<List<Requisicao>> pedacos = dividirLista(requisicoes, numThreads);
 
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
