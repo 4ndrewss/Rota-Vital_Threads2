@@ -1,5 +1,7 @@
 package io.github._ndrewss.rota_vital.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import io.github._ndrewss.rota_vital.model.ExecucaoHistorico;
@@ -27,5 +29,10 @@ public class HistoricoService {
 
     public void registrarParalelo(int tamanho, int threads, long tempoMs) {
         repository.save(new ExecucaoHistorico(TIPO_PARALELO, tamanho, threads, tempoMs));
+    }
+
+    /** Devolve todas as execuções, da mais recente para a mais antiga. */
+    public List<ExecucaoHistorico> listar() {
+        return repository.findAllByOrderByIdDesc();
     }
 }
