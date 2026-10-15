@@ -1,0 +1,32 @@
+name: CI
+
+# Roda os testes a cada push (em qualquer branch) e a cada Pull Request para a main.
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixa o código
+        uses: actions/checkout@v4
+
+      - name: Instala o Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # O mvnw está versionado sem permissão de execução (o Dockerfile faz o mesmo chmod).
+      - name: Dá permissão ao Maven Wrapper
+        run: chmod +x mvnw
+
+      # Os testes usam H2 em memória: não precisam de PostgreSQL nem de Docker.
+      - name: Roda os testes
+        run: ./mvnw -B test
