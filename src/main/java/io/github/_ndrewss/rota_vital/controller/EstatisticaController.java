@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.github._ndrewss.rota_vital.model.EstatisticaHospital;
 import io.github._ndrewss.rota_vital.model.Requisicao;
 import io.github._ndrewss.rota_vital.service.EstatisticaService;
+import io.github._ndrewss.rota_vital.service.HistoricoService;
 import io.github._ndrewss.rota_vital.util.GeradorRequisicoes;
 
 @RestController
@@ -18,9 +19,11 @@ public class EstatisticaController {
     // O Spring cria e injeta essa dependência automaticamente
     // por causa do @Service que colocamos lá no EstatisticaService
     private final EstatisticaService estatisticaService;
+    private final HistoricoService historicoService;
 
-    public EstatisticaController(EstatisticaService estatisticaService) {
+    public EstatisticaController(EstatisticaService estatisticaService, HistoricoService historicoService) {
         this.estatisticaService = estatisticaService;
+        this.historicoService = historicoService;
     }
 
     // Exemplo de chamada: GET http://localhost:8080/estatisticas/sequencial?tamanho=100000
@@ -42,6 +45,9 @@ public class EstatisticaController {
 
         // 5. Calcula quanto tempo levou, em milissegundos
         long tempoGastoMs = (fim - inicio) / 1_000_000;
+
+        // Guarda a execução no histórico (só chega aqui se os parâmetros eram válidos)
+        historicoService.registrarSequencial(tamanho, tempoGastoMs);
 
         // 6. Monta a resposta que vai virar JSON:
         //    um "pacote" contendo o tempo gasto e o resultado do cálculo
@@ -72,6 +78,9 @@ public class EstatisticaController {
 
         // 5. Calcula quanto tempo levou, em milissegundos
         long tempoGastoMs = (fim - inicio) / 1_000_000;
+
+        // Guarda a execução no histórico (só chega aqui se os parâmetros eram válidos)
+        historicoService.registrarParalelo(tamanho, threads, tempoGastoMs);
 
         // 6. Monta a resposta que vai virar JSON
         Map<String, Object> resposta = new java.util.HashMap<>();
