@@ -26,6 +26,7 @@ public class EstatisticaController {
     // Exemplo de chamada: GET http://localhost:8080/estatisticas/sequencial?tamanho=100000
     @GetMapping("/estatisticas/sequencial")
     public Map<String, Object> calcularSequencial(@RequestParam int tamanho) {
+        validarTamanho(tamanho);
 
         // 1. Gera os dados fake (ajusta "gerar" pro nome real do seu método)
         List<Requisicao> requisicoes = GeradorRequisicoes.gerar(tamanho);
@@ -55,6 +56,7 @@ public class EstatisticaController {
     // Exemplo de chamada: GET http://localhost:8080/estatisticas/paralelo?tamanho=100000&threads=4
     @GetMapping("/estatisticas/paralelo")
     public Map<String, Object> calcularParalelo(@RequestParam int tamanho, @RequestParam int threads) {
+        validarTamanho(tamanho);
 
         // 1. Gera os dados fake
         List<Requisicao> requisicoes = GeradorRequisicoes.gerar(tamanho);
@@ -79,5 +81,13 @@ public class EstatisticaController {
         resposta.put("resultado", resultado);
 
         return resposta;
+    }
+
+    // Regra da H1: tamanho precisa ser maior que zero. A mensagem cita "tamanho" (o nome do
+    // parâmetro na URL) em vez de "quantidade" (o nome usado dentro do GeradorRequisicoes).
+    private void validarTamanho(int tamanho) {
+        if (tamanho <= 0) {
+            throw new IllegalArgumentException("tamanho deve ser maior que zero");
+        }
     }
 }
