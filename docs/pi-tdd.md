@@ -38,3 +38,68 @@ mais antiga.*
 | --- | --- | --- |
 | T3.1 | o repositório devolve as execuções da mais nova para a mais antiga | integração (banco) |
 | T3.2 | `GET /historico` devolve essa lista em JSON | aceitação (com banco) |
+
+## Anotações do desenvolvimento
+
+### Quais regras foram testadas primeiro, e por quê (risco)
+
+A ordem seguiu o risco: primeiro o que pode quebrar a API ou estragar o dado que a comparação
+de desempenho usa, por último o que é só apresentação.
+
+1. **T1.1, `threads <= 0` no service.** Maior risco e menor esforço: qualquer pessoa digita
+   `threads=0` na URL e a API estourava `ArithmeticException` (divisão por zero), virando erro 500.
+   É também a base da T1.2.
+2. **T1.2 e T1.3, resposta 400.** Dependem da T1.1. O risco é o cliente receber erro interno do
+   servidor, sem saber que o erro foi dele.
+3. **T2.1 e T2.2, o que o histórico grava.** O objetivo do projeto é comparar sequencial e
+   paralelo. Se o sequencial fosse gravado com `threads` diferente de 1, ou com o tipo trocado, a
+   comparação futura ficaria errada sem ninguém perceber.
+4. **T2.3, gravação ponta a ponta.** Garante que a gravação realmente acontece no fluxo da API e
+   que chamada com erro não deixa lixo no banco.
+5. **T3.1 e T3.2, ordenação da consulta.** Risco menor: se a ordem falhar, só a leitura fica
+   confusa, nenhum dado se perde. Por isso ficou por último.
+
+### O que ficou sem teste
+
+- **Limite máximo de `threads` e de `tamanho`.** Não existe regra definida. Hoje `threads=1000000`
+  tenta criar um milhão de threads e `tamanho` muito grande pode dar `OutOfMemoryError`. Vale o
+  grupo definir os limites (Release 2).
+- **Valores que não são números** (`tamanho=abc`). O Spring já responde 400 sozinho, e isso não foi
+  coberto por teste nosso.
+- **O valor de `tempoGastoMs`.** Depende da máquina, então só dá para testar que ele existe, e
+  isso não foi feito.
+- **PostgreSQL de verdade.** Os testes rodam no H2 em memória. Diferenças entre os dois bancos
+  não são cobertas.
+- **Ordenação por data.** A consulta ordena pelo `id` (sempre crescente), não por `criadoEm`,
+  para o teste não depender de relógio.
+- **O teste "chamada inválida não grava"** já passava antes da implementação (é uma trava
+  contra regressão, não um teste vermelho).
+- **`IllegalArgumentException` vira 400 em qualquer lugar da API.** Se algum código interno lançar
+  essa exceção por outro motivo, ele também vira 400, mesmo sendo um bug do servidor.
+
+### Uso de IA
+
+- **Ferramenta:** Claude (Claude Code, modelo Sonnet 5.5).
+- **Prompt principal:** o checklist do PI (print do Notion com story map, tarefas, testes unitário,
+  integração e aceitação, histórico red → green, CI e anotações) e o pedido "crie uma branch e me
+  explique tudo oq vc fez pra eu entender".
+- **O que a IA fez:** propôs as histórias H1 a H3 e as tarefas, escreveu os testes antes do código
+  (commits `test:`) e o código mínimo para passar (commits `feat:`), criou o workflow de CI e
+  escreveu estas anotações.
+- **Limite importante:** na sessão em que isto foi escrito o Claude **não conseguiu rodar
+  `./mvnw test`** (o ambiente dele não acessa o Maven Central). O vermelho e o verde de cada
+  commit descritos aqui são o **esperado**, não foram observados. Quem assina precisa rodar os
+  testes e conferir.
+
+### Como conferir o vermelho → verde
+
+Em cada par de commits, o `test:` deve falhar e o `feat:` seguinte deve passar:
+
+```bash
+git log --oneline                 # veja os pares test: / feat:
+git checkout <sha-do-commit-test> && ./mvnw test   # esperado: falha
+git checkout <sha-do-commit-feat> && ./mvnw test   # esperado: passa
+git checkout feat/pi-tdd-validacao-historico       # volta para a ponta da branch
+```
+
+Se algum teste ficar de um jeito diferente do esperado, corrija e anote aqui.

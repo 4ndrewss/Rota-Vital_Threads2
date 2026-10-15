@@ -191,6 +191,18 @@ O tempo medido cobre **só o processamento** — a geração dos dados fica de f
 > chamada trabalha sobre uma massa diferente. Para comparar sequencial vs. threads de
 > forma justa, vale passar uma semente fixa.
 
+### Erros e histórico
+
+Parâmetros inválidos (`tamanho <= 0` ou `threads <= 0`) respondem **400** com um JSON dizendo o
+que errou, por exemplo `{"erro": "threads deve ser maior que zero"}`.
+
+Toda chamada válida é gravada na tabela `execucao_historico` (tipo, tamanho, threads e tempo) e
+pode ser consultada, da mais recente para a mais antiga:
+
+```http
+GET /historico
+```
+
 ---
 
 ## 🗺️ Story map do PI
@@ -207,6 +219,15 @@ uma entrega.
 
 As histórias da Release 1 estão quebradas em tarefas, com o tipo de teste de cada uma, em
 [docs/pi-tdd.md](./docs/pi-tdd.md).
+
+---
+
+## 🤖 Uso de IA
+
+Declaração exigida pelo [CONTRIBUTING](./CONTRIBUTING.md#9-uso-de-ia). Os testes, o código, o
+workflow de CI e a documentação do PI foram rascunhados pelo Claude (Claude Code) e precisam ser
+lidos e validados pelo grupo antes do merge. O prompt usado e os limites do que foi verificado
+estão em [docs/pi-tdd.md](./docs/pi-tdd.md#uso-de-ia).
 
 ---
 
