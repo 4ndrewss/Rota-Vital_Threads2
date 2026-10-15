@@ -1,0 +1,12 @@
+# Só vai para o build o que o Dockerfile usa (.mvn, mvnw, pom.xml, src)
+.git
+target/
+docs/
+metricas/
+.idea/
+.vscode/
+*.iml
+HELP.md
+
+# Segredos nunca entram na imagem
+.env

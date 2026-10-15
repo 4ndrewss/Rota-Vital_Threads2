@@ -1,0 +1,45 @@
+# API + Postgres. Para subir do zero:
+#   cp .env.example .env
+#   docker compose up -d --build
+name: rota-vital
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:?defina DB_NAME no .env (copie o .env.example)}
+      POSTGRES_USER: ${DB_USER:?defina DB_USER no .env (copie o .env.example)}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env (copie o .env.example)}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    # Sem "ports": o banco só é acessível pela rede interna do Compose (a API o acha pelo nome "db")
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:-}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # /actuator/health responde 503 se a API não alcança o banco, e o wget falha
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  db-data:

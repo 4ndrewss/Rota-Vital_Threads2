@@ -9,9 +9,89 @@ Os testes utilizam cargas de 100 mil e 1 milhão de requisições, processadas c
 
 ---
 
-## 🚀 Como executar
+## 🐳 Como executar com Docker
 
-Requisitos: Java 21, Spring Boot 4.0.8 e Maven Wrapper incluso no projeto.
+Só precisa do Docker instalado (não precisa de Java nem Maven na máquina). Sobe a API e o
+PostgreSQL do zero, igual em qualquer máquina:
+
+```bash
+cp .env.example .env          # 1ª vez: cria o .env com as variáveis (ajuste a senha)
+docker compose up -d --build  # compila, roda os testes e sobe API + banco
+docker compose ps             # os dois serviços devem aparecer como (healthy)
+```
+
+A API fica em `http://localhost:8080` (ou na porta definida em `API_PORT` no `.env`).
+
+```bash
+curl localhost:8080/actuator/health                                    # status da API e do banco
+curl "localhost:8080/estatisticas/sequencial?tamanho=100000"
+curl "localhost:8080/estatisticas/paralelo?tamanho=100000&threads=4"
+```
+
+| Comando | O que faz |
+| --- | --- |
+| `docker compose logs -f api` | acompanha o log da API |
+| `docker compose down` | para e remove os containers — **os dados continuam** no volume |
+| `docker compose down -v` | remove também o volume (apaga o banco) |
+
+### Variáveis (`.env`)
+
+| Variável | Para que serve |
+| --- | --- |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD` | banco criado pelo Postgres na 1ª subida e usado pela API |
+| `API_PORT` | porta da API no seu computador (padrão `8080`) |
+| `JAVA_TOOL_OPTIONS` | opções da JVM, ex.: `-XX:MaxRAMPercentage=75` |
+
+O `.env` está no `.gitignore` e no `.dockerignore`: a senha não vai para o repositório nem
+para dentro da imagem. O modelo versionado é o `.env.example`.
+
+> O Postgres só lê `DB_NAME`/`DB_USER`/`DB_PASSWORD` quando cria o banco, na 1ª subida.
+> Se mudar depois, rode `docker compose down -v` para recriar o volume.
+
+### Decisões do container
+
+**Imagem base: `eclipse-temurin`.** É a distribuição OpenJDK do Eclipse Adoptium: gratuita,
+certificada (TCK) e a imagem Java oficial mais usada no Docker Hub. A versão é a **21**, a mesma
+do `pom.xml`. O build usa `21-jdk` (precisa do compilador); a execução usa `21-jre-alpine`, que
+só tem o necessário para rodar e é bem menor. O banco é o `postgres:16-alpine` (oficial, mesma
+versão usada no desenvolvimento local).
+
+**Por que multi-stage.** O `Dockerfile` tem dois estágios:
+
+1. `build`: copia o código e roda `./mvnw package`, que **compila e roda os testes** (com H2 em
+   memória, sem precisar do Postgres) e gera o jar. Se um teste falhar, a imagem não é gerada.
+2. final: parte de uma imagem limpa só com a JRE e copia **apenas o jar** do 1º estágio.
+
+Assim a imagem que roda não carrega JDK, Maven, código-fonte nem dependências de teste
+(~390 MB contra ~950 MB do estágio de build), e menos coisa dentro é menos superfície de
+ataque. Ela também roda com um usuário sem privilégio (`app`), não como root. O cache do Maven
+(`~/.m2`) é montado como cache do BuildKit, então as dependências só são baixadas no 1º build.
+
+**Onde ficam os dados.** No PostgreSQL, que grava em `/var/lib/postgresql/data` dentro do
+container. Essa pasta é o **volume nomeado `rota-vital_db-data`**, gerenciado pelo Docker e
+separado do container: sobrevive a `docker compose down`, a rebuilds e a reinícios. Só
+`docker compose down -v` apaga. A API não guarda nada em disco (é *stateless*); tudo que ela
+persiste (ex.: a tabela `execucao_historico`) vai para o banco.
+
+**Como os serviços se encontram.** O Compose cria uma rede própria (`rota-vital_default`) e
+coloca os dois serviços nela. Dentro dessa rede, cada serviço é encontrado **pelo nome** (DNS
+interno do Docker): a API conecta em `jdbc:postgresql://db:5432/...`, onde `db` é o nome do
+serviço no `compose.yaml`. Por isso:
+
+- o banco **não publica porta** no seu computador, só a API o enxerga;
+- só a API publica porta (`API_PORT` → `8080` do container);
+- `depends_on` com `condition: service_healthy` faz a API só subir depois que o `pg_isready`
+  do banco responde;
+- a API também tem healthcheck: o Compose chama `/actuator/health`, que inclui o teste de
+  conexão com o banco (`"db": {"status": "UP"}`).
+
+---
+
+## 🚀 Como executar sem Docker
+
+Requisitos: Java 21, Spring Boot 4.0.8 e Maven Wrapper incluso no projeto. A aplicação espera
+um PostgreSQL em `localhost:5432` (veja a seção 2 do [CONTRIBUTING](./CONTRIBUTING.md)); os
+testes usam H2 em memória e não precisam de banco.
 
 ```bash
 # iniciar a aplicação
