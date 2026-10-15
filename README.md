@@ -193,6 +193,23 @@ O tempo medido cobre **só o processamento** — a geração dos dados fica de f
 
 ---
 
+## 🗺️ Story map do PI
+
+O story map lê-se da esquerda para a direita (o fluxo de uso) e de cima para baixo (prioridade).
+A linha do topo é o *backbone*: as grandes atividades de quem usa a API. Cada linha de baixo é
+uma entrega.
+
+| | Gerar massa de dados | Processar | Comparar desempenho | Histórico |
+| --- | --- | --- | --- | --- |
+| **Já entregue** | gerar N requisições | sequencial e paralelo | tempo gasto em ms | entidade e repositório criados, ainda sem uso |
+| **Release 1 (este PI)** | — | **H1** validar `tamanho` e `threads` | — | **H2** registrar cada execução · **H3** consultar o histórico |
+| **Release 2 (ideias, não feitas)** | semente fixa | limite máximo de threads e tamanho | comparação entre execuções | filtrar o histórico por tipo |
+
+As histórias da Release 1 estão quebradas em tarefas, com o tipo de teste de cada uma, em
+[docs/pi-tdd.md](./docs/pi-tdd.md).
+
+---
+
 ## 👥 Membros da Equipe
 
 | Integrante | GitHub |
