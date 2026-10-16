@@ -3,6 +3,8 @@ package io.github._ndrewss.rota_vital.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +18,7 @@ import io.github._ndrewss.rota_vital.util.ValidadorParametros;
 
 @RestController
 public class EstatisticaController {
+    private static final Logger LOG = LoggerFactory.getLogger(EstatisticaController.class);
 
     // O Spring cria e injeta essa dependência automaticamente
     // por causa do @Service que colocamos lá no EstatisticaService
@@ -29,11 +32,10 @@ public class EstatisticaController {
     }
 
     // Exemplo de chamada: GET http://localhost:8080/estatisticas/sequencial?tamanho=100000
-    /** Valida a carga e o orçamento antes de calcular, medir e registrar uma execução sequencial. */
+    /** Valida a carga, calcula e informa se foi possível registrar a execução sequencial. */
     @GetMapping("/estatisticas/sequencial")
     public Map<String, Object> calcularSequencial(@RequestParam int tamanho) {
         ValidadorParametros.validarTamanho(tamanho);
-        historicoService.verificarCapacidade();
 
         // 1. Gera os dados fake (ajusta "gerar" pro nome real do seu método)
         List<Requisicao> requisicoes = GeradorRequisicoes.gerar(tamanho);
@@ -51,7 +53,7 @@ public class EstatisticaController {
         long tempoGastoMs = (fim - inicio) / 1_000_000;
 
         // Guarda a execução no histórico (só chega aqui se os parâmetros eram válidos)
-        historicoService.registrarSequencial(tamanho, tempoGastoMs);
+        boolean historicoRegistrado = registrarHistorico(() -> historicoService.registrarSequencial(tamanho, tempoGastoMs));
 
         // 6. Monta a resposta que vai virar JSON:
         //    um "pacote" contendo o tempo gasto e o resultado do cálculo
@@ -59,17 +61,20 @@ public class EstatisticaController {
         resposta.put("tempoGastoMs", tempoGastoMs);
         resposta.put("totalHospitais", resultado.size());
         resposta.put("resultado", resultado);
+        resposta.put("historicoRegistrado", historicoRegistrado);
+        if (!historicoRegistrado) {
+            resposta.put("aviso", "Cálculo concluído, mas não foi possível registrar no histórico.");
+        }
 
         return resposta;
     }
 
     // Exemplo de chamada: GET http://localhost:8080/estatisticas/paralelo?tamanho=100000&threads=4
-    /** Valida tamanho e threads antes de gerar a massa e registrar a execução paralela. */
+    /** Valida tamanho e threads, calcula e informa se foi possível registrar a execução paralela. */
     @GetMapping("/estatisticas/paralelo")
     public Map<String, Object> calcularParalelo(@RequestParam int tamanho, @RequestParam int threads) {
         ValidadorParametros.validarTamanho(tamanho);
         estatisticaService.validarThreads(threads);
-        historicoService.verificarCapacidade();
 
         // 1. Gera os dados fake
         List<Requisicao> requisicoes = GeradorRequisicoes.gerar(tamanho);
@@ -87,7 +92,7 @@ public class EstatisticaController {
         long tempoGastoMs = (fim - inicio) / 1_000_000;
 
         // Guarda a execução no histórico (só chega aqui se os parâmetros eram válidos)
-        historicoService.registrarParalelo(tamanho, threads, tempoGastoMs);
+        boolean historicoRegistrado = registrarHistorico(() -> historicoService.registrarParalelo(tamanho, threads, tempoGastoMs));
 
         // 6. Monta a resposta que vai virar JSON
         Map<String, Object> resposta = new java.util.HashMap<>();
@@ -95,7 +100,21 @@ public class EstatisticaController {
         resposta.put("tempoGastoMs", tempoGastoMs);
         resposta.put("totalHospitais", resultado.size());
         resposta.put("resultado", resultado);
+        resposta.put("historicoRegistrado", historicoRegistrado);
+        if (!historicoRegistrado) {
+            resposta.put("aviso", "Cálculo concluído, mas não foi possível registrar no histórico.");
+        }
 
         return resposta;
+    }
+    /** Isola falhas de persistência para preservar o resultado calculado e avisar o cliente. */
+    private boolean registrarHistorico(Runnable gravacao) {
+        try {
+            gravacao.run();
+            return true;
+        } catch (RuntimeException e) {
+            LOG.warn("Cálculo concluído sem registro no histórico ({})", e.getClass().getSimpleName());
+            return false;
+        }
     }
 }

@@ -46,7 +46,7 @@ public class HistoricoService {
         registrar(new ExecucaoHistorico(TIPO_PARALELO, tamanho, threads, tempoMs));
     }
 
-    /** Evita iniciar uma carga cara quando o orçamento do histórico já está esgotado. */
+    /** Recusa somente a gravação quando o orçamento do histórico está esgotado. */
     public void verificarCapacidade() {
         if (repository.count() >= maxRegistros) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,

@@ -204,8 +204,9 @@ O tempo medido cobre **só o processamento** — a geração dos dados fica de f
 Parâmetros inválidos (`tamanho <= 0` ou `threads <= 0`) respondem **400** com um JSON dizendo o
 que errou, por exemplo `{"erro": "threads deve ser maior que zero"}`.
 
-Toda execução concluída com sucesso é gravada na tabela `execucao_historico` (tipo, tamanho, threads e tempo) e
-pode ser consultada, da mais recente para a mais antiga:
+As execuções são gravadas na tabela `execucao_historico` (tipo, tamanho, threads e tempo)
+enquanto houver capacidade e a gravação estiver disponível. O campo `historicoRegistrado`
+informa se a execução foi salva. Os registros podem ser consultados por IDs maiores primeiro:
 
 ```http
 GET /historico?pagina=0&limite=20
@@ -219,19 +220,30 @@ Durante novas gravações, páginas posteriores podem mudar de posição; não s
 
 - **Carga:** de 1 a 1.000.000 requisições; **threads:** de 1 a 32. Valores fora dos limites
   retornam HTTP 400 antes de gerar a massa ou criar threads.
-- **Taxa global por instância:** 60 chamadas por janela fixa de um minuto, incluindo chamadas
-  inválidas. No máximo 2 chamadas simultâneas. Excesso retorna HTTP 429 e `Retry-After`.
-  Todas as rotas passam pelo filtro, exceto `/actuator/health`.
-- **Armazenamento:** até 10.000 registros no histórico. Quando cheio, novas execuções retornam
-  HTTP 503; a consulta continua disponível. Não há exclusão automática: um responsável deve
-  exportar e remover registros antigos no banco, conforme a necessidade do projeto.
-  Se o banco já tiver mais registros antes da atualização, novas gravações ficam bloqueadas.
+- **Taxa por IP de transporte:** 60 chamadas por janela fixa de um minuto, incluindo chamadas
+  que a aplicação rejeita como inválidas. Um IP não consome a cota de outro. O filtro não confia
+  em `Forwarded` ou `X-Forwarded-For`; clientes que compartilham um IP/NAT também compartilham a cota.
+- **Concorrência:** 2 chamadas globais por padrão, no máximo 1 por IP. O limite por IP é metade
+  do global, arredondada para baixo. A configuração global deve ser pelo menos 2 para reservar
+  capacidade a outro cliente. Excesso recebe HTTP 429 e `Retry-After`; chamadas recusadas na
+  admissão não consomem a cota por minuto. O healthcheck `/actuator/health` fica isento.
+- **Memória do limitador:** até 4096 IPs acompanhados por instância. Somente cotas expiradas
+  sem chamadas ativas são removidas. Ao atingir esse teto, novos IPs recebem 429 até haver vaga;
+  as cotas dos IPs já acompanhados continuam isoladas. Há no máximo uma limpeza por segundo.
+- **Armazenamento:** até 10.000 registros no histórico, preservados sem exclusão automática.
+  Com o histórico cheio ou falha de gravação, o cálculo continua respondendo HTTP 200, com
+  `historicoRegistrado: false` e um `aviso`. Quando a gravação funciona, o campo vale `true`.
+  Para voltar a gravar após atingir o teto, um responsável deve exportar e remover registros
+  antigos no banco. A consulta continua disponível; novas gravações não ultrapassam o teto.
 
 As propriedades `rota.limites.requisicoes-por-minuto`, `rota.limites.requisicoes-simultaneas` e
 `rota.historico.max-registros` ficam em `application.properties`. O teto do histórico aceita
 configuração de 1 a 10000. A contagem e a inserção são serializadas até o commit na mesma instância.
 
 Esses controles foram preparados para **uma instância da API**, sem autenticação de usuários.
+`server.forward-headers-strategy=none` mantém a identificação pelo endereço de transporte.
+Se houver proxy, a cota será compartilhada pelo IP desse proxy: só habilite encaminhamento de
+IP com uma cadeia de proxies confiáveis e sem acesso direto de clientes ao backend.
 Não use várias réplicas gravando no mesmo banco sem coordenar o orçamento de armazenamento e
 as cotas em um componente compartilhado. Para exposição pública, configure também autenticação
 e limites no gateway; o filtro local não protege contra saturação da rede ou ataques distribuídos.

@@ -27,7 +27,7 @@ não perder os tempos medidos.*
 | --- | --- | --- |
 | T2.1 | execução sequencial é gravada com tipo `SEQUENCIAL` e `threads = 1` | unitário |
 | T2.2 | execução paralela é gravada com tipo `PARALELO` e o número de threads pedido | unitário |
-| T2.3 | chamada válida grava 1 linha no banco; chamada inválida não grava nada | aceitação (com banco) |
+| T2.3 | chamada válida grava 1 linha quando há capacidade e a gravação funciona; inválida não grava | aceitação (com banco) |
 
 ### H3 — Consultar o histórico
 
@@ -91,7 +91,7 @@ de desempenho usa, por último o que é só apresentação.
 
 - **Limites de recursos (atualização após revisão).** A API agora limita tamanho a 1000000,
   threads a 32, consulta a 100 registros por página e armazenamento a 10000 registros.
-  A taxa e a concorrência são controladas por instância. Há testes para esses controles;
+  A taxa é por IP de transporte; a concorrência tem limites por IP e por instância. Há testes para esses controles;
   gateway, autenticação e coordenação entre réplicas continuam fora desta implementação.
 - **Valores que não são números** (`tamanho=abc`). O Spring já responde 400 sozinho, e isso não foi
   coberto por teste nosso.
@@ -100,7 +100,7 @@ de desempenho usa, por último o que é só apresentação.
 - **PostgreSQL de verdade.** Os testes rodam no H2 em memória. Diferenças entre os dois bancos
   não são cobertas.
 - **Ordenação por data.** O `id` é gerado em sequência crescente, mas a consulta ordena pelo
-  `id` em ordem crescente (maiores primeiro), não por `criadoEm`, para o teste não depender
+  `id` em ordem decrescente (maiores primeiro), não por `criadoEm`, para o teste não depender
   de relógio.
 - **O teste "chamada inválida não grava"** já passava antes da implementação (é uma trava
   contra regressão, não um teste vermelho).
@@ -139,5 +139,20 @@ Se algum teste ficar de um jeito diferente do esperado, corrija e anote aqui.
 A pedido do grupo, o CodeRabbit Coding Agent preparou Javadoc para os métodos do PR,
 paginação no banco, limites de tamanho/threads, admissão por taxa/concorrência e um orçamento
 de registros que preserva o histórico existente. Os valores e a operação estão no README.
-Os testes novos foram escritos antes da implementação, mas os commits aguardam validação
-humana; esta atualização não comprova o vermelho/verde dos pares históricos anteriores.
+A revisão do PR #5 corrigiu o isolamento de cotas por IP e manteve os cálculos disponíveis
+mesmo quando não é possível gravar. A resposta informa `historicoRegistrado` e um aviso se
+necessário; nenhum registro existente é apagado. O teto global de concorrência e o orçamento
+de armazenamento continuam em vigor. Os testes de caracterização adicionados por Enzo foram
+preservados e adaptados ao comportamento revisado. Estas correções não comprovam o
+vermelho/verde de todos os pares históricos anteriores.
+
+### Verificação do par novo de T1.3 nesta revisão
+
+O par novo foi conferido em cópias limpas dos commits, usando Java 21 e o comando
+`bash mvnw -B -Dtest=ValidadorParametrosTest test`:
+
+- `b0e32b4`: falhou na compilação porque `ValidadorParametros` ainda não existia (vermelho).
+- `050f736`: os 7 casos de `ValidadorParametrosTest` passaram (verde).
+
+Isso comprova esse par de commits. Os pares mais antigos ainda precisam de verificação;
+os testes declarados como "nasceram verdes" continuam sendo testes de caracterização.
