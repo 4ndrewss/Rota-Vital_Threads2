@@ -21,6 +21,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 class LimiteRequisicoesHttpTest {
     @LocalServerPort
     private int porta;
+    private int encaminhado;
 
     /** A cota produz 429 via HTTP e o healthcheck continua disponível. */
     @Test
@@ -38,6 +39,8 @@ class LimiteRequisicoesHttpTest {
     /** Envia uma requisição ao servidor de teste com tempo de espera limitado. */
     private HttpResponse<String> consultar(HttpClient cliente, String caminho) throws Exception {
         var pedido = HttpRequest.newBuilder(URI.create("http://localhost:" + porta + caminho))
+                .header("X-Forwarded-For", "203.0.113." + ++encaminhado)
+                .header("Forwarded", "for=203.0.113." + encaminhado)
                 .timeout(Duration.ofSeconds(10)).GET().build();
         return cliente.send(pedido, HttpResponse.BodyHandlers.ofString());
     }

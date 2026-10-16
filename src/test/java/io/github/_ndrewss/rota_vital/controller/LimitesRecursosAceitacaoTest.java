@@ -33,13 +33,20 @@ class LimitesRecursosAceitacaoTest {
 
     /** Verifica que o teto de armazenamento preserva os registros já existentes. */
     @Test
-    void recusaExecucaoQuandoHistoricoEstaCheio() throws Exception {
+    void concluiCalculoQuandoHistoricoEstaCheio() throws Exception {
         for (int tamanho = 1; tamanho <= 3; tamanho++) {
             mockMvc.perform(get("/estatisticas/sequencial").param("tamanho", "" + tamanho))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.historicoRegistrado").value(true));
         }
         mockMvc.perform(get("/estatisticas/sequencial").param("tamanho", "4"))
-                .andExpect(status().isServiceUnavailable());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.historicoRegistrado").value(false))
+                .andExpect(jsonPath("$.aviso").exists())
+                .andExpect(jsonPath("$.resultado").exists());
+        mockMvc.perform(get("/estatisticas/paralelo").param("tamanho", "4").param("threads", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.historicoRegistrado").value(false));
         assertEquals(3, repository.count());
         mockMvc.perform(get("/historico").param("limite", "2"))
                 .andExpect(status().isOk())
