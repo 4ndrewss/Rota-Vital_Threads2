@@ -23,7 +23,7 @@ docker compose ps             # os dois serviços devem aparecer como (healthy)
 A API fica em `http://localhost:8080` (ou na porta definida em `API_PORT` no `.env`).
 
 ```bash
-curl localhost:8080/actuator/health                                    # status da API e do banco
+docker compose exec api wget -qO- http://127.0.0.1:8081/actuator/health  # status interno da API e do banco
 curl "localhost:8080/estatisticas/sequencial?tamanho=100000"
 curl "localhost:8080/estatisticas/paralelo?tamanho=100000&threads=4"
 ```
@@ -82,8 +82,10 @@ serviço no `compose.yaml`. Por isso:
 - só a API publica porta (`API_PORT` → `8080` do container);
 - `depends_on` com `condition: service_healthy` faz a API só subir depois que o `pg_isready`
   do banco responde;
-- a API também tem healthcheck: o Compose chama `/actuator/health`, que inclui o teste de
-  conexão com o banco (`"db": {"status": "UP"}`).
+- a API também tem healthcheck: o Compose chama `127.0.0.1:8081/actuator/health` dentro do
+  container, incluindo o teste de conexão com o banco (`"db": {"status": "UP"}`). A porta
+  `8081` escuta somente em loopback e não é publicada nem acessível aos outros containers.
+  `/actuator/health` na porta pública da API retorna 404 (ou 429 se a cota estiver esgotada).
 
 ---
 
@@ -105,6 +107,9 @@ testes usam H2 em memória e não precisam de banco.
 ```
 
 No Windows, utilize `mvnw.cmd` no lugar de `./mvnw`.
+
+Sem Docker, a saúde pode ser consultada na própria máquina em
+`http://127.0.0.1:8081/actuator/health`; essa porta não aceita conexões de outras máquinas.
 
 💡 Gerar 1 milhão de requisições pode consumir entre 150 e 200 MB de heap.
 Caso ocorra `OutOfMemoryError`, execute a aplicação com `-Xmx2g`.
@@ -226,7 +231,10 @@ Durante novas gravações, páginas posteriores podem mudar de posição; não s
 - **Concorrência:** 2 chamadas globais por padrão, no máximo 1 por IP. O limite por IP é metade
   do global, arredondada para baixo. A configuração global deve ser pelo menos 2 para reservar
   capacidade a outro cliente. Excesso recebe HTTP 429 e `Retry-After`; chamadas recusadas na
-  admissão não consomem a cota por minuto. O healthcheck `/actuator/health` fica isento.
+  admissão não consomem a cota por minuto. Para excesso de taxa, `Retry-After` informa os
+  segundos restantes da janela, arredondados para cima (mínimo 1).
+- **Saúde:** `/actuator/health` usa um servidor separado em `127.0.0.1:8081`, sem exposição
+  pública. A sonda do Docker continua disponível quando as cotas da API estão esgotadas.
 - **Memória do limitador:** até 4096 IPs acompanhados por instância. Somente cotas expiradas
   sem chamadas ativas são removidas. Ao atingir esse teto, novos IPs recebem 429 até haver vaga;
   as cotas dos IPs já acompanhados continuam isoladas. Há no máximo uma limpeza por segundo.

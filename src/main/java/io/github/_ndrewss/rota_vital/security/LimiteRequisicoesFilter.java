@@ -54,12 +54,6 @@ public class LimiteRequisicoesFilter extends OncePerRequestFilter {
         this.ultimaLimpeza = relogio.getAsLong();
     }
 
-    /** Mantém a sonda de saúde disponível independentemente das cotas da aplicação. */
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        return (request.getContextPath() + "/actuator/health").equals(request.getRequestURI());
-    }
-
     /** Usa o endereço da conexão, sem confiar em Forwarded ou X-Forwarded-For enviados pelo cliente. */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -103,7 +97,8 @@ public class LimiteRequisicoesFilter extends OncePerRequestFilter {
             cota.recebidas = 0;
         }
         if (cota.recebidas >= porMinuto) {
-            return 60;
+            long restante = MINUTO - (agora - cota.inicio);
+            return Math.max(1, (int) TimeUnit.NANOSECONDS.toSeconds(restante + TimeUnit.SECONDS.toNanos(1) - 1));
         }
         if (cota.emAndamento >= simultaneasPorCliente || !vagas.tryAcquire()) {
             return 1;
