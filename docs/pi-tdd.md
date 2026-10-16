@@ -39,6 +39,34 @@ mais antiga.*
 | T3.1 | o repositório devolve uma página de execuções por IDs decrescentes | integração (banco) |
 | T3.2 | `GET /historico` devolve a página solicitada em JSON | aceitação (com banco) |
 
+## Teste unitário de cada tarefa de regra
+
+Além do teste principal de cada tarefa (tabelas acima), toda tarefa de regra tem pelo menos um
+**teste unitário**: ele chama a regra direto, sem subir Spring nem banco.
+
+| Tarefa | Teste unitário | Como nasceu |
+| --- | --- | --- |
+| T1.1 | `EstatisticaServiceTest` (threads menor ou igual a zero e acima de 32) | vermelho → verde |
+| T1.2 | `ApiExceptionHandlerTest` | **nasceu verde** (código já existia) |
+| T1.3 | `ValidadorParametrosTest` (tamanho de 1 a 1000000) | vermelho → verde |
+| T2.1 | `HistoricoServiceTest` (`registrarSequencial`) | vermelho → verde |
+| T2.2 | `HistoricoServiceTest` (`registrarParalelo`) | vermelho → verde |
+| T2.3 | `EstatisticaControllerTest` (válido grava, inválido não grava) | **nasceu verde** |
+| T3.1 | `HistoricoServiceTest` (`listar`: página, limite e teto de registros) | **nasceu verde** |
+| T3.2 | `HistoricoControllerTest` | **nasceu verde** |
+
+**Por que alguns "nasceram verdes".** Esses testes unitários foram escritos *depois* do código,
+que já existia (parte dele veio da revisão do CodeRabbit). Um teste escrito depois do código não
+tem como falhar antes: ele é um *teste de caracterização*. Protege contra erros futuros, mas
+**não prova** que a regra nasceu do teste. A prova de vermelho → verde está só nas tarefas
+marcadas "vermelho → verde", e mesmo ela precisa ser conferida rodando `./mvnw test` em cada
+commit (veja "Como conferir o vermelho → verde" abaixo).
+
+**O par novo desta etapa (T1.3).** A regra de `tamanho` estava escondida num método privado do
+controller, que não dá para chamar num teste unitário. Então o commit `test:` escreveu o teste da
+regra antes (falhando, porque a classe `ValidadorParametros` ainda não existia) e o commit
+`feat:` seguinte criou a classe e fez o controller usá-la. O comportamento da API não mudou.
+
 ## Anotações do desenvolvimento
 
 ### Quais regras foram testadas primeiro, e por quê (risco)
