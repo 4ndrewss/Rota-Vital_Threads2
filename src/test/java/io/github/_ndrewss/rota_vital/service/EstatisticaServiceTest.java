@@ -1,6 +1,7 @@
 package io.github._ndrewss.rota_vital.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ class EstatisticaServiceTest {
 
     private final EstatisticaService service = new EstatisticaService();
 
+    /** Compara os resultados por hospital usando a mesma massa determinística. */
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 3, 4, 8})
     void paraleloDeveBaterComSequencialParaVariasQuantidadesDeThreads(int numThreads) {
@@ -34,6 +36,7 @@ class EstatisticaServiceTest {
         assertEstatisticasIguais(resultadoSequencial, resultadoParalelo);
     }
 
+    /** Detecta perda de dados na partição que recebe o resto da divisão. */
     @Test
     void paraleloDeveBaterComSequencialComTamanhoNaoDivisivelPeloNumeroDeThreads() {
         // 100_007 não é múltiplo de 7: força pedaços de tamanhos diferentes
@@ -43,6 +46,28 @@ class EstatisticaServiceTest {
         Map<String, EstatisticaHospital> resultadoParalelo = service.calcularParalelo(requisicoes, 7);
 
         assertEstatisticasIguais(resultadoSequencial, resultadoParalelo);
+    }
+
+    // H1 / T1.1 — regra: threads precisa ser maior que zero
+    /** Confere a validação e a mensagem para números de threads não positivos. */
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1})
+    void paraleloComThreadsMenorOuIgualAZeroDeveLancarIllegalArgumentException(int numThreads) {
+        List<Requisicao> requisicoes = GeradorRequisicoes.gerar(1_000, 42L);
+
+        IllegalArgumentException erro = assertThrows(IllegalArgumentException.class,
+                () -> service.calcularParalelo(requisicoes, numThreads));
+
+        assertEquals("threads deve ser maior que zero", erro.getMessage());
+    }
+
+    /** Limita a criação de threads e mantém o valor máximo suportado funcionando. */
+    @Test
+    void rejeitaExcessoDeThreadsEAceitaLimite() {
+        var requisicoes = GeradorRequisicoes.gerar(32, 42L);
+        assertThrows(IllegalArgumentException.class, () -> service.calcularParalelo(requisicoes, 33));
+        assertThrows(IllegalArgumentException.class, () -> service.dividirLista(requisicoes, 33));
+        assertEstatisticasIguais(service.calcularSequencial(requisicoes), service.calcularParalelo(requisicoes, 32));
     }
 
     /**

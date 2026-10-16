@@ -33,8 +33,9 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      # /actuator/health responde 503 se a API não alcança o banco, e o wget falha
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health"]
+      # Sonda interna em loopback, sem publicar a porta de gerenciamento.
+      # /actuator/health responde 503 se a API não alcança o banco, e o wget falha.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8081/actuator/health"]
       interval: 10s
       timeout: 3s
       retries: 5

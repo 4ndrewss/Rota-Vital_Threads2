@@ -23,7 +23,7 @@ docker compose ps             # os dois serviços devem aparecer como (healthy)
 A API fica em `http://localhost:8080` (ou na porta definida em `API_PORT` no `.env`).
 
 ```bash
-curl localhost:8080/actuator/health                                    # status da API e do banco
+docker compose exec api wget -qO- http://127.0.0.1:8081/actuator/health  # status interno da API e do banco
 curl "localhost:8080/estatisticas/sequencial?tamanho=100000"
 curl "localhost:8080/estatisticas/paralelo?tamanho=100000&threads=4"
 ```
@@ -82,8 +82,10 @@ serviço no `compose.yaml`. Por isso:
 - só a API publica porta (`API_PORT` → `8080` do container);
 - `depends_on` com `condition: service_healthy` faz a API só subir depois que o `pg_isready`
   do banco responde;
-- a API também tem healthcheck: o Compose chama `/actuator/health`, que inclui o teste de
-  conexão com o banco (`"db": {"status": "UP"}`).
+- a API também tem healthcheck: o Compose chama `127.0.0.1:8081/actuator/health` dentro do
+  container, incluindo o teste de conexão com o banco (`"db": {"status": "UP"}`). A porta
+  `8081` escuta somente em loopback e não é publicada nem acessível aos outros containers.
+  `/actuator/health` na porta pública da API retorna 404 (ou 429 se a cota estiver esgotada).
 
 ---
 
@@ -106,6 +108,9 @@ testes usam H2 em memória e não precisam de banco.
 
 No Windows, utilize `mvnw.cmd` no lugar de `./mvnw`.
 
+Sem Docker, a saúde pode ser consultada na própria máquina em
+`http://127.0.0.1:8081/actuator/health`; essa porta não aceita conexões de outras máquinas.
+
 💡 Gerar 1 milhão de requisições pode consumir entre 150 e 200 MB de heap.
 Caso ocorra `OutOfMemoryError`, execute a aplicação com `-Xmx2g`.
 
@@ -126,12 +131,20 @@ Caso ocorra `OutOfMemoryError`, execute a aplicação com `-Xmx2g`.
 src/main/java/io/github/_ndrewss/rota_vital/
 ├── RotaVitalApplication.java       # entrada da aplicação Spring Boot
 ├── controller/
-│   └── EstatisticaController.java  # endpoints REST que disparam o processamento
+│   ├── EstatisticaController.java  # endpoints REST que disparam o processamento
+│   ├── ApiExceptionHandler.java   # respostas de erro
+│   └── HistoricoController.java   # consulta paginada do histórico
 ├── model/
 │   ├── Requisicao.java             # POJO com os dados usados nos cálculos
-│   └── EstatisticaHospital.java    # acumulador por hospital (total, soma, média)
+│   ├── EstatisticaHospital.java    # acumulador por hospital (total, soma, média)
+│   └── ExecucaoHistorico.java      # execução persistida no banco
+├── repository/
+│   └── ExecucaoHistoricoRepository.java # acesso paginado ao histórico
+├── security/
+│   └── LimiteRequisicoesFilter.java # controle de taxa e concorrência
 ├── service/
-│   └── EstatisticaService.java     # cálculo das estatísticas + divisão da carga
+│   ├── EstatisticaService.java     # cálculo das estatísticas + divisão da carga
+│   └── HistoricoService.java       # orçamento e registro de execuções
 └── util/
     └── GeradorRequisicoes.java     # gerador de massa de dados fake
 ```
@@ -190,6 +203,86 @@ O tempo medido cobre **só o processamento** — a geração dos dados fica de f
 > Hoje o endpoint chama `GeradorRequisicoes.gerar(tamanho)` sem semente, então cada
 > chamada trabalha sobre uma massa diferente. Para comparar sequencial vs. threads de
 > forma justa, vale passar uma semente fixa.
+
+### Erros e histórico
+
+Parâmetros inválidos (`tamanho <= 0` ou `threads <= 0`) respondem **400** com um JSON dizendo o
+que errou, por exemplo `{"erro": "threads deve ser maior que zero"}`.
+
+As execuções são gravadas na tabela `execucao_historico` (tipo, tamanho, threads e tempo)
+enquanto houver capacidade e a gravação estiver disponível. O campo `historicoRegistrado`
+informa se a execução foi salva. Os registros podem ser consultados por IDs maiores primeiro:
+
+```http
+GET /historico?pagina=0&limite=20
+```
+
+A resposta continua sendo um array JSON. `pagina` começa em zero (máximo 10000) e `limite`
+aceita de 1 a 100 registros. Sem parâmetros, retorna somente os 20 primeiros registros.
+Durante novas gravações, páginas posteriores podem mudar de posição; não são um retrato fixo.
+
+### Limites de recursos
+
+- **Carga:** de 1 a 1.000.000 requisições; **threads:** de 1 a 32. Valores fora dos limites
+  retornam HTTP 400 antes de gerar a massa ou criar threads.
+- **Taxa por IP de transporte:** 60 chamadas por janela fixa de um minuto, incluindo chamadas
+  que a aplicação rejeita como inválidas. Um IP não consome a cota de outro. O filtro não confia
+  em `Forwarded` ou `X-Forwarded-For`; clientes que compartilham um IP/NAT também compartilham a cota.
+- **Concorrência:** 2 chamadas globais por padrão, no máximo 1 por IP. O limite por IP é metade
+  do global, arredondada para baixo. A configuração global deve ser pelo menos 2 para reservar
+  capacidade a outro cliente. Excesso recebe HTTP 429 e `Retry-After`; chamadas recusadas na
+  admissão não consomem a cota por minuto. Para excesso de taxa, `Retry-After` informa os
+  segundos restantes da janela, arredondados para cima (mínimo 1).
+- **Saúde:** `/actuator/health` usa um servidor separado em `127.0.0.1:8081`, sem exposição
+  pública. A sonda do Docker continua disponível quando as cotas da API estão esgotadas.
+- **Memória do limitador:** até 4096 IPs acompanhados por instância. Somente cotas expiradas
+  sem chamadas ativas são removidas. Ao atingir esse teto, novos IPs recebem 429 até haver vaga;
+  as cotas dos IPs já acompanhados continuam isoladas. Há no máximo uma limpeza por segundo.
+- **Armazenamento:** até 10.000 registros no histórico, preservados sem exclusão automática.
+  Com o histórico cheio ou falha de gravação, o cálculo continua respondendo HTTP 200, com
+  `historicoRegistrado: false` e um `aviso`. Quando a gravação funciona, o campo vale `true`.
+  Para voltar a gravar após atingir o teto, um responsável deve exportar e remover registros
+  antigos no banco. A consulta continua disponível; novas gravações não ultrapassam o teto.
+
+As propriedades `rota.limites.requisicoes-por-minuto`, `rota.limites.requisicoes-simultaneas` e
+`rota.historico.max-registros` ficam em `application.properties`. O teto do histórico aceita
+configuração de 1 a 10000. A contagem e a inserção são serializadas até o commit na mesma instância.
+
+Esses controles foram preparados para **uma instância da API**, sem autenticação de usuários.
+`server.forward-headers-strategy=none` mantém a identificação pelo endereço de transporte.
+Se houver proxy, a cota será compartilhada pelo IP desse proxy: só habilite encaminhamento de
+IP com uma cadeia de proxies confiáveis e sem acesso direto de clientes ao backend.
+Não use várias réplicas gravando no mesmo banco sem coordenar o orçamento de armazenamento e
+as cotas em um componente compartilhado. Para exposição pública, configure também autenticação
+e limites no gateway; o filtro local não protege contra saturação da rede ou ataques distribuídos.
+
+---
+
+## 🗺️ Story map do PI
+
+O story map lê-se da esquerda para a direita (o fluxo de uso) e de cima para baixo (prioridade).
+A linha do topo é o *backbone*: as grandes atividades de quem usa a API. Cada linha de baixo é
+uma entrega.
+
+| | Gerar massa de dados | Processar | Comparar desempenho | Histórico |
+| --- | --- | --- | --- | --- |
+| **Já entregue antes deste PI** | gerar N requisições | sequencial e paralelo | tempo gasto em ms | entidade e repositório criados, ainda sem uso |
+| **Release 1 (este PI)** | — | **H1** validar `tamanho` e `threads` | — | **H2** registrar cada execução · **H3** consultar o histórico |
+| **Release 2 (ideias, não feitas)** | semente fixa | limites ajustáveis por perfil de uso | comparação entre execuções | filtrar o histórico por tipo |
+
+As histórias da Release 1 estão quebradas em tarefas, com o tipo de teste de cada uma, em
+[docs/pi-tdd.md](./docs/pi-tdd.md).
+
+---
+
+## 🤖 Uso de IA
+
+Declaração exigida pelo [CONTRIBUTING](./CONTRIBUTING.md#9-uso-de-ia). Os testes, o código, o
+workflow de CI e a documentação inicial do PI foram rascunhados pelo Claude (Claude Code) e precisam ser
+lidos e validados pelo grupo antes do merge. O prompt usado e os limites do que foi verificado
+estão em [docs/pi-tdd.md](./docs/pi-tdd.md#uso-de-ia). Os ajustes de limites de recursos,
+paginação e Javadoc foram preparados pelo CodeRabbit Coding Agent a pedido do grupo e
+também aguardam validação humana.
 
 ---
 
