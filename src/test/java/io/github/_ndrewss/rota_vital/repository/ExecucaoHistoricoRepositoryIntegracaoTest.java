@@ -7,6 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import io.github._ndrewss.rota_vital.model.ExecucaoHistorico;
@@ -21,27 +22,30 @@ class ExecucaoHistoricoRepositoryIntegracaoTest {
     @Autowired
     private ExecucaoHistoricoRepository repository;
 
+    /** Remove registros anteriores para isolar a ordenação e a consulta vazia. */
     @BeforeEach
     void limparBanco() {
         repository.deleteAll();
     }
 
     // H3 / T3.1
+    /** Confere no H2 que o SQL ordena a página por IDs decrescentes. */
     @Test
     void devolveExecucoesDaMaisNovaParaAMaisAntiga() {
         repository.save(new ExecucaoHistorico("SEQUENCIAL", 100, 1, 10L));
         repository.save(new ExecucaoHistorico("PARALELO", 200, 2, 20L));
         repository.save(new ExecucaoHistorico("PARALELO", 300, 4, 30L));
 
-        List<ExecucaoHistorico> lista = repository.findAllByOrderByIdDesc();
+        List<ExecucaoHistorico> lista = repository.findAllByOrderByIdDesc(PageRequest.of(0, 20));
 
         // a ordem é conferida pelo tamanho, que é diferente em cada linha gravada
         assertEquals(List.of(300, 200, 100), lista.stream().map(ExecucaoHistorico::getTamanho).toList());
     }
 
     // H3 / T3.1
+    /** Confere que a consulta paginada aceita um histórico vazio. */
     @Test
     void devolveListaVaziaQuandoNaoHaExecucoes() {
-        assertEquals(0, repository.findAllByOrderByIdDesc().size());
+        assertEquals(0, repository.findAllByOrderByIdDesc(PageRequest.of(0, 20)).size());
     }
 }

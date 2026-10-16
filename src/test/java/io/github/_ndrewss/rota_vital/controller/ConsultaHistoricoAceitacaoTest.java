@@ -29,6 +29,7 @@ class ConsultaHistoricoAceitacaoTest {
 
     private MockMvc mockMvc;
 
+    /** Isola o cenário para conferir a ordem de gravação e de consulta. */
     @BeforeEach
     void prepararBancoVazio() {
         mockMvc = MockMvcBuilders.webAppContextSetup(contexto).build();
@@ -36,6 +37,7 @@ class ConsultaHistoricoAceitacaoTest {
     }
 
     // H3 / T3.2
+    /** Confere que o JSON devolve o paralelo gravado depois antes do sequencial. */
     @Test
     @DisplayName("Dado que rodei o sequencial e depois o paralelo, quando consulto /historico, então o paralelo (mais recente) vem primeiro")
     void historicoListaAMaisRecentePrimeiro() throws Exception {
@@ -56,6 +58,7 @@ class ConsultaHistoricoAceitacaoTest {
     }
 
     // H3 / T3.2
+    /** Confere que o histórico sem registros responde com um array vazio. */
     @Test
     @DisplayName("Dado o histórico vazio, quando consulto /historico, então recebo uma lista vazia")
     void historicoVazioRetornaListaVazia() throws Exception {

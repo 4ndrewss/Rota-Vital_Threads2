@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import io.github._ndrewss.rota_vital.model.ExecucaoHistorico;
 import io.github._ndrewss.rota_vital.repository.ExecucaoHistoricoRepository;
@@ -18,9 +19,10 @@ import io.github._ndrewss.rota_vital.repository.ExecucaoHistoricoRepository;
 class HistoricoServiceTest {
 
     private final ExecucaoHistoricoRepository repository = mock(ExecucaoHistoricoRepository.class);
-    private final HistoricoService service = new HistoricoService(repository);
+    private final HistoricoService service = new HistoricoService(repository, mock(PlatformTransactionManager.class), 10_000);
 
     // H2 / T2.1
+    /** Verifica os metadados e o tempo enviados ao repositório para o sequencial. */
     @Test
     void registrarSequencialGravaTipoSequencialComUmaThread() {
         service.registrarSequencial(100_000, 42L);
@@ -34,6 +36,7 @@ class HistoricoServiceTest {
     }
 
     // H2 / T2.2
+    /** Verifica os metadados e as threads enviados ao repositório para o paralelo. */
     @Test
     void registrarParaleloGravaTipoParaleloComONumeroDeThreadsPedido() {
         service.registrarParalelo(1_000_000, 8, 17L);
@@ -46,6 +49,7 @@ class HistoricoServiceTest {
         assertNotNull(gravado.getCriadoEm());
     }
 
+    /** Captura a entidade passada ao repositório sem depender de um banco real. */
     private ExecucaoHistorico capturarGravado() {
         ArgumentCaptor<ExecucaoHistorico> captor = ArgumentCaptor.forClass(ExecucaoHistorico.class);
         verify(repository).save(captor.capture());

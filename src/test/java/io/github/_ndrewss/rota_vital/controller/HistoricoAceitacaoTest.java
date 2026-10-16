@@ -33,6 +33,7 @@ class HistoricoAceitacaoTest {
 
     private MockMvc mockMvc;
 
+    /** Limpa o H2 para conferir a quantidade exata de registros gerados por cada cenário. */
     @BeforeEach
     void prepararBancoVazio() {
         mockMvc = MockMvcBuilders.webAppContextSetup(contexto).build();
@@ -40,6 +41,7 @@ class HistoricoAceitacaoTest {
     }
 
     // H2 / T2.3
+    /** Confere no banco o tipo, o tamanho e as threads após uma chamada paralela. */
     @Test
     @DisplayName("Dado o histórico vazio, quando chamo /estatisticas/paralelo com parâmetros válidos, então 1 execução PARALELO fica gravada")
     void chamadaParaleloValidaGravaNoHistorico() throws Exception {
@@ -57,6 +59,7 @@ class HistoricoAceitacaoTest {
     }
 
     // H2 / T2.3
+    /** Confere que uma chamada sequencial grava uma execução com uma única thread. */
     @Test
     @DisplayName("Dado o histórico vazio, quando chamo /estatisticas/sequencial com tamanho válido, então 1 execução SEQUENCIAL com 1 thread fica gravada")
     void chamadaSequencialValidaGravaNoHistorico() throws Exception {
@@ -74,6 +77,7 @@ class HistoricoAceitacaoTest {
 
     // H2 / T2.3 — este teste já passa antes da implementação: serve de trava para o futuro,
     // garantindo que quando o registro for ligado, chamadas com erro continuem sem gravar nada.
+    /** Garante que uma chamada rejeitada não deixa registros no histórico. */
     @Test
     @DisplayName("Dado o histórico vazio, quando chamo a API com threads inválido, então recebo 400 e nada é gravado")
     void chamadaInvalidaNaoGravaNoHistorico() throws Exception {

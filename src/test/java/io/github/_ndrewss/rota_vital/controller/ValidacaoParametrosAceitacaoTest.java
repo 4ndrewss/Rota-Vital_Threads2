@@ -26,12 +26,14 @@ class ValidacaoParametrosAceitacaoTest {
 
     private MockMvc mockMvc;
 
+    /** Monta o cliente MVC com os controllers e serviços reais do contexto de teste. */
     @BeforeEach
     void montarMockMvc() {
         mockMvc = MockMvcBuilders.webAppContextSetup(contexto).build();
     }
 
     // H1 / T1.2
+    /** Confere o status e a mensagem para zero e valores negativos de threads. */
     @ParameterizedTest
     @ValueSource(ints = {0, -5})
     @DisplayName("Dado threads <= 0, quando chamo /estatisticas/paralelo, então recebo 400 com a mensagem de erro")
@@ -44,6 +46,7 @@ class ValidacaoParametrosAceitacaoTest {
     }
 
     // H1 / T1.3
+    /** Confere que o sequencial rejeita tamanhos não positivos com HTTP 400. */
     @ParameterizedTest
     @ValueSource(ints = {0, -5})
     @DisplayName("Dado tamanho <= 0, quando chamo /estatisticas/sequencial, então recebo 400 com a mensagem de erro")
@@ -55,6 +58,7 @@ class ValidacaoParametrosAceitacaoTest {
     }
 
     // H1 / T1.3
+    /** Confere que o paralelo rejeita tamanhos não positivos com HTTP 400. */
     @ParameterizedTest
     @ValueSource(ints = {0, -5})
     @DisplayName("Dado tamanho <= 0, quando chamo /estatisticas/paralelo, então recebo 400 com a mensagem de erro")
