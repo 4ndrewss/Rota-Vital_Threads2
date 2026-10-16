@@ -9,6 +9,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -61,15 +63,35 @@ class LimiteRequisicoesFilterTest {
         assertEquals(200, resposta.getStatus());
     }
 
-    /** O healthcheck permanece disponível mesmo após esgotar a cota da aplicação. */
+    /** O caminho de saúde na porta pública não permite contornar a cota da aplicação. */
     @Test
-    void healthcheckNaoConsomeCota() throws Exception {
+    void caminhoDeHealthcheckNaoContornaCota() throws Exception {
         var filtro = new LimiteRequisicoesFilter(1, 2);
-        for (String rota : new String[] {"/historico", "/actuator/health"}) {
+        assertEquals(200, chamar(filtro, "127.0.0.1", null).getStatus());
+        for (String contexto : new String[] {"", "/api"}) {
+            var pedido = new MockHttpServletRequest("GET", contexto + "/actuator/health");
+            pedido.setContextPath(contexto);
             var resposta = new MockHttpServletResponse();
-            filtro.doFilter(new MockHttpServletRequest("GET", rota), resposta, (req, res) -> {});
-            assertEquals(200, resposta.getStatus());
+            filtro.doFilter(pedido, resposta, (req, res) -> {
+                throw new AssertionError("caminho de saúde público não deve contornar a cota");
+            });
+            assertEquals(429, resposta.getStatus());
         }
+    }
+
+    /** Arredonda a espera restante para cima, inclusive na última fração de segundo. */
+    @ParameterizedTest
+    @CsvSource({"1, 60", "1000000000, 59", "58100000000, 2", "59000000000, 1", "59999999999, 1"})
+    void informaSomenteEsperaRestante(long decorrido, String esperado) throws Exception {
+        AtomicLong tempo = new AtomicLong(123);
+        var filtro = new LimiteRequisicoesFilter(1, 2, tempo::get);
+        assertEquals(200, chamar(filtro, "192.0.2.1", null).getStatus());
+        tempo.addAndGet(decorrido);
+        var excesso = chamar(filtro, "192.0.2.1", null);
+        assertEquals(429, excesso.getStatus());
+        assertEquals(esperado, excesso.getHeader("Retry-After"));
+        tempo.set(123 + TimeUnit.MINUTES.toNanos(1));
+        assertEquals(200, chamar(filtro, "192.0.2.1", null).getStatus());
     }
     /** Um IP que esgota a própria cota não bloqueia outro IP. */
     @Test
