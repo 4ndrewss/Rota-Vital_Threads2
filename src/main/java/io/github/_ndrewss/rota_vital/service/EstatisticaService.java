@@ -17,6 +17,7 @@ import io.github._ndrewss.rota_vital.model.Requisicao;
 
 @Service
 public class EstatisticaService {
+    /** Acumula totais e tempos por hospital sem criar threads adicionais. */
     public Map<String, EstatisticaHospital> calcularSequencial(List<Requisicao> requisicoes){
         Map<String, EstatisticaHospital> mapaEstatisticas = new HashMap<>();
 
@@ -36,9 +37,11 @@ public class EstatisticaService {
         return mapaEstatisticas;
     }
 
+    /** Divide a lista entre até 32 tarefas e inclui o resto na última partição. */
     public List<List<Requisicao>> dividirLista(List<Requisicao> requisicoes, int numThreads) {
 
         // Lista que vai guardar os pedaços (cada pedaço é uma lista menor)
+        validarThreads(numThreads);
         List<List<Requisicao>> pedacos = new ArrayList<>();
 
         int tamanhoTotal = requisicoes.size();
@@ -103,11 +106,7 @@ public class EstatisticaService {
      * próprio mapa parcial) e no final agrega os mapas parciais num único mapa.
      */
     public Map<String, EstatisticaHospital> calcularParalelo(List<Requisicao> requisicoes, int numThreads) {
-        // Valida antes de qualquer conta: com 0 threads a divisão da lista estourava
-        // ArithmeticException (divisão por zero), que virava erro 500 na API.
-        if (numThreads <= 0) {
-            throw new IllegalArgumentException("threads deve ser maior que zero");
-        }
+        validarThreads(numThreads);
 
         List<List<Requisicao>> pedacos = dividirLista(requisicoes, numThreads);
 
@@ -133,6 +132,15 @@ public class EstatisticaService {
             throw new RuntimeException("Erro ao processar pedaço em paralelo", e.getCause());
         } finally {
             executor.shutdown();
+        }
+    }
+    /** Rejeita threads inválidas antes de gerar dados ou criar o executor. */
+    public void validarThreads(int numThreads) {
+        if (numThreads <= 0) {
+            throw new IllegalArgumentException("threads deve ser maior que zero");
+        }
+        if (numThreads > 32) {
+            throw new IllegalArgumentException("threads deve ser no máximo 32");
         }
     }
 }

@@ -126,12 +126,20 @@ Caso ocorra `OutOfMemoryError`, execute a aplicação com `-Xmx2g`.
 src/main/java/io/github/_ndrewss/rota_vital/
 ├── RotaVitalApplication.java       # entrada da aplicação Spring Boot
 ├── controller/
-│   └── EstatisticaController.java  # endpoints REST que disparam o processamento
+│   ├── EstatisticaController.java  # endpoints REST que disparam o processamento
+│   ├── ApiExceptionHandler.java   # respostas de erro
+│   └── HistoricoController.java   # consulta paginada do histórico
 ├── model/
 │   ├── Requisicao.java             # POJO com os dados usados nos cálculos
-│   └── EstatisticaHospital.java    # acumulador por hospital (total, soma, média)
+│   ├── EstatisticaHospital.java    # acumulador por hospital (total, soma, média)
+│   └── ExecucaoHistorico.java      # execução persistida no banco
+├── repository/
+│   └── ExecucaoHistoricoRepository.java # acesso paginado ao histórico
+├── security/
+│   └── LimiteRequisicoesFilter.java # controle de taxa e concorrência
 ├── service/
-│   └── EstatisticaService.java     # cálculo das estatísticas + divisão da carga
+│   ├── EstatisticaService.java     # cálculo das estatísticas + divisão da carga
+│   └── HistoricoService.java       # orçamento e registro de execuções
 └── util/
     └── GeradorRequisicoes.java     # gerador de massa de dados fake
 ```
@@ -196,12 +204,37 @@ O tempo medido cobre **só o processamento** — a geração dos dados fica de f
 Parâmetros inválidos (`tamanho <= 0` ou `threads <= 0`) respondem **400** com um JSON dizendo o
 que errou, por exemplo `{"erro": "threads deve ser maior que zero"}`.
 
-Toda chamada válida é gravada na tabela `execucao_historico` (tipo, tamanho, threads e tempo) e
+Toda execução concluída com sucesso é gravada na tabela `execucao_historico` (tipo, tamanho, threads e tempo) e
 pode ser consultada, da mais recente para a mais antiga:
 
 ```http
-GET /historico
+GET /historico?pagina=0&limite=20
 ```
+
+A resposta continua sendo um array JSON. `pagina` começa em zero (máximo 10000) e `limite`
+aceita de 1 a 100 registros. Sem parâmetros, retorna somente os 20 primeiros registros.
+Durante novas gravações, páginas posteriores podem mudar de posição; não são um retrato fixo.
+
+### Limites de recursos
+
+- **Carga:** de 1 a 1.000.000 requisições; **threads:** de 1 a 32. Valores fora dos limites
+  retornam HTTP 400 antes de gerar a massa ou criar threads.
+- **Taxa global por instância:** 60 chamadas por janela fixa de um minuto, incluindo chamadas
+  inválidas. No máximo 2 chamadas simultâneas. Excesso retorna HTTP 429 e `Retry-After`.
+  Todas as rotas passam pelo filtro, exceto `/actuator/health`.
+- **Armazenamento:** até 10.000 registros no histórico. Quando cheio, novas execuções retornam
+  HTTP 503; a consulta continua disponível. Não há exclusão automática: um responsável deve
+  exportar e remover registros antigos no banco, conforme a necessidade do projeto.
+  Se o banco já tiver mais registros antes da atualização, novas gravações ficam bloqueadas.
+
+As propriedades `rota.limites.requisicoes-por-minuto`, `rota.limites.requisicoes-simultaneas` e
+`rota.historico.max-registros` ficam em `application.properties`. O teto do histórico aceita
+configuração de 1 a 10000. A contagem e a inserção são serializadas até o commit na mesma instância.
+
+Esses controles foram preparados para **uma instância da API**, sem autenticação de usuários.
+Não use várias réplicas gravando no mesmo banco sem coordenar o orçamento de armazenamento e
+as cotas em um componente compartilhado. Para exposição pública, configure também autenticação
+e limites no gateway; o filtro local não protege contra saturação da rede ou ataques distribuídos.
 
 ---
 
@@ -215,7 +248,7 @@ uma entrega.
 | --- | --- | --- | --- | --- |
 | **Já entregue antes deste PI** | gerar N requisições | sequencial e paralelo | tempo gasto em ms | entidade e repositório criados, ainda sem uso |
 | **Release 1 (este PI)** | — | **H1** validar `tamanho` e `threads` | — | **H2** registrar cada execução · **H3** consultar o histórico |
-| **Release 2 (ideias, não feitas)** | semente fixa | limite máximo de threads e tamanho | comparação entre execuções | filtrar o histórico por tipo |
+| **Release 2 (ideias, não feitas)** | semente fixa | limites ajustáveis por perfil de uso | comparação entre execuções | filtrar o histórico por tipo |
 
 As histórias da Release 1 estão quebradas em tarefas, com o tipo de teste de cada uma, em
 [docs/pi-tdd.md](./docs/pi-tdd.md).
@@ -225,9 +258,11 @@ As histórias da Release 1 estão quebradas em tarefas, com o tipo de teste de c
 ## 🤖 Uso de IA
 
 Declaração exigida pelo [CONTRIBUTING](./CONTRIBUTING.md#9-uso-de-ia). Os testes, o código, o
-workflow de CI e a documentação do PI foram rascunhados pelo Claude (Claude Code) e precisam ser
+workflow de CI e a documentação inicial do PI foram rascunhados pelo Claude (Claude Code) e precisam ser
 lidos e validados pelo grupo antes do merge. O prompt usado e os limites do que foi verificado
-estão em [docs/pi-tdd.md](./docs/pi-tdd.md#uso-de-ia).
+estão em [docs/pi-tdd.md](./docs/pi-tdd.md#uso-de-ia). Os ajustes de limites de recursos,
+paginação e Javadoc foram preparados pelo CodeRabbit Coding Agent a pedido do grupo e
+também aguardam validação humana.
 
 ---
 

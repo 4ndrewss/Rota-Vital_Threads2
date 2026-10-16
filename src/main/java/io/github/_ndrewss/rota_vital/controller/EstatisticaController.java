@@ -21,15 +21,18 @@ public class EstatisticaController {
     private final EstatisticaService estatisticaService;
     private final HistoricoService historicoService;
 
+    /** Recebe os serviços de cálculo e de persistência das execuções. */
     public EstatisticaController(EstatisticaService estatisticaService, HistoricoService historicoService) {
         this.estatisticaService = estatisticaService;
         this.historicoService = historicoService;
     }
 
     // Exemplo de chamada: GET http://localhost:8080/estatisticas/sequencial?tamanho=100000
+    /** Valida a carga e o orçamento antes de calcular, medir e registrar uma execução sequencial. */
     @GetMapping("/estatisticas/sequencial")
     public Map<String, Object> calcularSequencial(@RequestParam int tamanho) {
         validarTamanho(tamanho);
+        historicoService.verificarCapacidade();
 
         // 1. Gera os dados fake (ajusta "gerar" pro nome real do seu método)
         List<Requisicao> requisicoes = GeradorRequisicoes.gerar(tamanho);
@@ -60,9 +63,12 @@ public class EstatisticaController {
     }
 
     // Exemplo de chamada: GET http://localhost:8080/estatisticas/paralelo?tamanho=100000&threads=4
+    /** Valida tamanho e threads antes de gerar a massa e registrar a execução paralela. */
     @GetMapping("/estatisticas/paralelo")
     public Map<String, Object> calcularParalelo(@RequestParam int tamanho, @RequestParam int threads) {
         validarTamanho(tamanho);
+        estatisticaService.validarThreads(threads);
+        historicoService.verificarCapacidade();
 
         // 1. Gera os dados fake
         List<Requisicao> requisicoes = GeradorRequisicoes.gerar(tamanho);
@@ -94,9 +100,13 @@ public class EstatisticaController {
 
     // Regra da H1: tamanho precisa ser maior que zero. A mensagem cita "tamanho" (o nome do
     // parâmetro na URL) em vez de "quantidade" (o nome usado dentro do GeradorRequisicoes).
+    /** Restringe a massa entre uma e um milhão de requisições para limitar o uso de memória. */
     private void validarTamanho(int tamanho) {
         if (tamanho <= 0) {
             throw new IllegalArgumentException("tamanho deve ser maior que zero");
+        }
+        if (tamanho > 1_000_000) {
+            throw new IllegalArgumentException("tamanho deve ser no máximo 1000000");
         }
     }
 }

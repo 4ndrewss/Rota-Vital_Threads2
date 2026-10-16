@@ -36,8 +36,8 @@ mais antiga.*
 
 | Tarefa | Regra | Tipo de teste |
 | --- | --- | --- |
-| T3.1 | o repositório devolve as execuções da mais nova para a mais antiga | integração (banco) |
-| T3.2 | `GET /historico` devolve essa lista em JSON | aceitação (com banco) |
+| T3.1 | o repositório devolve uma página de execuções por IDs decrescentes | integração (banco) |
+| T3.2 | `GET /historico` devolve a página solicitada em JSON | aceitação (com banco) |
 
 ## Anotações do desenvolvimento
 
@@ -61,9 +61,10 @@ de desempenho usa, por último o que é só apresentação.
 
 ### O que ficou sem teste
 
-- **Limite máximo de `threads` e de `tamanho`.** Não existe regra definida. Hoje `threads=1000000`
-  tenta criar um milhão de threads e `tamanho` muito grande pode dar `OutOfMemoryError`. Vale o
-  grupo definir os limites (Release 2).
+- **Limites de recursos (atualização após revisão).** A API agora limita tamanho a 1000000,
+  threads a 32, consulta a 100 registros por página e armazenamento a 10000 registros.
+  A taxa e a concorrência são controladas por instância. Há testes para esses controles;
+  gateway, autenticação e coordenação entre réplicas continuam fora desta implementação.
 - **Valores que não são números** (`tamanho=abc`). O Spring já responde 400 sozinho, e isso não foi
   coberto por teste nosso.
 - **O valor de `tempoGastoMs`.** Depende da máquina, então só dá para testar que ele existe, e
@@ -104,3 +105,11 @@ git checkout feat/pi-tdd-validacao-historico       # volta para a ponta da branc
 ```
 
 Se algum teste ficar de um jeito diferente do esperado, corrija e anote aqui.
+
+### Ajustes após os alertas do CodeRabbit
+
+A pedido do grupo, o CodeRabbit Coding Agent preparou Javadoc para os métodos do PR,
+paginação no banco, limites de tamanho/threads, admissão por taxa/concorrência e um orçamento
+de registros que preserva o histórico existente. Os valores e a operação estão no README.
+Os testes novos foram escritos antes da implementação, mas os commits aguardam validação
+humana; esta atualização não comprova o vermelho/verde dos pares históricos anteriores.
