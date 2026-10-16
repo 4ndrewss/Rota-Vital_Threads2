@@ -213,7 +213,7 @@ uma entrega.
 
 | | Gerar massa de dados | Processar | Comparar desempenho | Histórico |
 | --- | --- | --- | --- | --- |
-| **Já entregue** | gerar N requisições | sequencial e paralelo | tempo gasto em ms | entidade e repositório criados, ainda sem uso |
+| **Já entregue antes deste PI** | gerar N requisições | sequencial e paralelo | tempo gasto em ms | entidade e repositório criados, ainda sem uso |
 | **Release 1 (este PI)** | — | **H1** validar `tamanho` e `threads` | — | **H2** registrar cada execução · **H3** consultar o histórico |
 | **Release 2 (ideias, não feitas)** | semente fixa | limite máximo de threads e tamanho | comparação entre execuções | filtrar o histórico por tipo |
 

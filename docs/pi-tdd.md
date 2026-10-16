@@ -70,8 +70,9 @@ de desempenho usa, por último o que é só apresentação.
   isso não foi feito.
 - **PostgreSQL de verdade.** Os testes rodam no H2 em memória. Diferenças entre os dois bancos
   não são cobertas.
-- **Ordenação por data.** A consulta ordena pelo `id` (sempre crescente), não por `criadoEm`,
-  para o teste não depender de relógio.
+- **Ordenação por data.** O `id` é gerado em sequência crescente, mas a consulta ordena pelo
+  `id` em ordem crescente (maiores primeiro), não por `criadoEm`, para o teste não depender
+  de relógio.
 - **O teste "chamada inválida não grava"** já passava antes da implementação (é uma trava
   contra regressão, não um teste vermelho).
 - **`IllegalArgumentException` vira 400 em qualquer lugar da API.** Se algum código interno lançar
