@@ -11,7 +11,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # Execuções manuais não substituem um push da main que esteja aguardando deploy.
+  group: ci-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
@@ -93,13 +94,15 @@ jobs:
       - name: Aciona Deploy Hook no Render
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          DEPLOY_REF: ${{ github.sha }}
         run: |
           if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
             echo "::error::Secret RENDER_DEPLOY_HOOK_URL não configurado nas configurações do repositório."
             exit 1
           fi
           echo "Disparando deploy automatizado no Render..."
-          HTTP_STATUS=$(curl -s -o /tmp/render_response.txt -w "%{http_code}" -X POST "$RENDER_DEPLOY_HOOK_URL")
+          # Serviço conectado ao GitHub: a URL do hook já contém ?key=.
+          HTTP_STATUS=$(curl -s -o /tmp/render_response.txt -w "%{http_code}" -X POST "${RENDER_DEPLOY_HOOK_URL}&ref=${DEPLOY_REF}")
           cat /tmp/render_response.txt
           echo ""
           if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then

@@ -283,7 +283,10 @@ A esteira de Integração e Entrega Contínua está definida em [`.github/workfl
 2. **`2. Imagem Docker (GHCR)` (`imagem`)**: depende de `testes`. Valida a construção multi-stage do `Dockerfile` em branches/PRs e, quando o evento é um `push`/merge na `main`, publica a imagem no **GitHub Container Registry** (`ghcr.io/4ndrewss/rota-vital`) com duas tags:
    - `latest` (última versão estável da `main`);
    - `<sha-curto>` (tag imutável do commit para rastreabilidade e rollback).
-3. **`3. Deploy Automatizado (Render)` (`deploy`)**: depende de `imagem` e só executa em merges/pushes na `main`. Consome o segredo `RENDER_DEPLOY_HOOK_URL` armazenado no cofre do **GitHub Actions Secrets** e dispara via `POST` a atualização automática do serviço na nuvem (**Render**), com **Auto-Deploy** nativo do Git desativado no provedor para garantir que nenhuma versão chegue ao ar sem passar pela esteira verde.
+3. **`3. Deploy Automatizado (Render)` (`deploy`)**: depende de `imagem` e só executa em merges/pushes na `main`. Consome o segredo `RENDER_DEPLOY_HOOK_URL` armazenado no cofre do **GitHub Actions Secrets** e dispara via `POST` a atualização automática do serviço na nuvem (**Render**). O serviço está conectado ao repositório GitHub e recebe `ref=<SHA completo da execução>` no hook para reconstruir o commit aprovado usando o `Dockerfile`. O **Auto-Deploy** nativo do Git fica desativado no provedor para garantir que a publicação passe pela esteira verde.
+
+As execuções da `main` são serializadas. Execuções manuais usam um grupo de concorrência
+separado, preservando os pushes que aguardam publicação.
 
 ### 🌐 Ambiente Público (Produção — Render)
 
@@ -307,7 +310,7 @@ curl "https://rota-vital-api.onrender.com/historico?pagina=0&limite=20"
 ### Cofre de segredos e variáveis de ambiente
 
 - **No GitHub (`Settings → Secrets and variables → Actions`)**:
-  - `RENDER_DEPLOY_HOOK_URL`: webhook privado que autoriza o disparo do deploy no Render.
+  - `RENDER_DEPLOY_HOOK_URL`: URL original do webhook privado do Render, incluindo `?key=...`. O workflow acrescenta `&ref=<SHA completo>` a cada execução.
   - `GITHUB_TOKEN`: token automático de escopo restrito (`packages: write`) para publicar a imagem no GHCR.
 - **No Render (`Environment Variables` do Web Service)**:
   - `DB_URL`, `DB_USER`, `DB_PASSWORD`: credenciais internas do banco PostgreSQL gerenciado no Render.
@@ -320,8 +323,8 @@ Caso uma versão publicada na `main` apresente regressão em produção, há **t
 1. **Rollback imediato pelo painel do Render (1 clique, sem novo build)**:
    - Acesse o serviço `rota-vital-api` no painel do Render → menu **Events** (ou **Deploys**).
    - Localize o deploy anterior estável e clique em **Rollback to this deploy**. O Render restaura instantaneamente o container da versão anterior.
-2. **Rollback por tag imutável da imagem no GHCR**:
-   - Como todo merge na `main` publica `ghcr.io/4ndrewss/rota-vital:<sha-curto>`, basta apontar a imagem para o SHA do commit anterior estável.
+2. **Rollback por commit específico no Render**:
+   - Use o recurso de deploy de um commit específico do Render e informe o SHA completo de um commit estável. O serviço reconstrói essa versão a partir do repositório GitHub usando o `Dockerfile`.
 3. **Rollback via Git (GitHub Flow)**:
    ```bash
    git checkout main && git pull
@@ -367,6 +370,8 @@ deploy automatizado no Render, guia de rollback e tabela de decisões (E3) foi e
 do Gemini (Antigravity) a partir do prompt: *"Estruturar o pipeline completo de CI/CD no GitHub Actions
 (build e testes -> imagem Docker no GHCR com tags latest e SHA -> deploy via Deploy Hook no Render com
 segredos no GitHub Secrets) e documentar decisões e rollback no README"*, revisado e validado pela equipe.
+As correções de concorrência e de deploy por commit foram preparadas pelo CodeRabbit Coding Agent
+a pedido do grupo: *"separar as execuções manuais e enviar o commit exato pelo parâmetro ref"*.
 
 ---
 
