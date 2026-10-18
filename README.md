@@ -338,6 +338,7 @@ As evidências exigidas para a etapa **E3 — Deploy Automatizado** estão arqui
 - **Execução vermelha barrando imagem e deploy** ([Run `#39083877310`](https://github.com/4ndrewss/Rota-Vital_Threads2/actions/runs/39083877310)): [`docs/evidencias/e3-pipeline-vermelho.png`](./docs/evidencias/e3-pipeline-vermelho.png)
 - **Execução verde validando testes e imagem Docker** ([Run `#39083580640`](https://github.com/4ndrewss/Rota-Vital_Threads2/actions/runs/39083580640)): [`docs/evidencias/e3-pipeline-verde.png`](./docs/evidencias/e3-pipeline-verde.png)
 - **Pull Request com checks da esteira e revisão** ([PR `#6`](https://github.com/4ndrewss/Rota-Vital_Threads2/pull/6)): [`docs/evidencias/e3-pr-pipeline.png`](./docs/evidencias/e3-pr-pipeline.png)
+- **URL pública no ar com persistência no PostgreSQL em nuvem** ([`https://rota-vital-api.onrender.com/historico`](https://rota-vital-api.onrender.com/historico)): [`docs/evidencias/e3-api-publica.png`](./docs/evidencias/e3-api-publica.png)
 
 ---
 
