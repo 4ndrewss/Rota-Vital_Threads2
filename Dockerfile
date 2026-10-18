@@ -16,6 +16,8 @@ RUN --mount=type=cache,target=/root/.m2 \
 
 # ---------- 2º estágio: só o necessário para rodar ----------
 FROM eclipse-temurin:21-jre-alpine
+LABEL org.opencontainers.image.source="https://github.com/4ndrewss/Rota-Vital_Threads2"
+LABEL org.opencontainers.image.description="Rota Vital API - Processamento Sequencial e Paralelo"
 WORKDIR /app
 
 # Não roda como root dentro do container

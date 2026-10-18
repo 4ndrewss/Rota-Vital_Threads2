@@ -275,6 +275,90 @@ As histórias da Release 1 estão quebradas em tarefas, com o tipo de teste de c
 
 ---
 
+## 🔄 Pipeline CI/CD, Deploy Automatizado e Rollback (E3)
+
+A esteira de Integração e Entrega Contínua está definida em [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) e é executada no **GitHub Actions** em três estágios encadeados (`needs:`):
+
+1. **`1. Build e Testes` (`testes`)**: roda a cada `push` (em qualquer branch) e em todo `Pull Request` para a `main`. Compila o projeto com Java 21 (Eclipse Temurin) e executa a suíte completa (`./mvnw -B test` — testes unitários, de integração com H2 e de aceitação). Se qualquer teste falhar, a esteira fica vermelha e **bloqueia os estágios seguintes**.
+2. **`2. Imagem Docker (GHCR)` (`imagem`)**: depende de `testes`. Valida a construção multi-stage do `Dockerfile` em branches/PRs e, quando o evento é um `push`/merge na `main`, publica a imagem no **GitHub Container Registry** (`ghcr.io/4ndrewss/rota-vital`) com duas tags:
+   - `latest` (última versão estável da `main`);
+   - `<sha-curto>` (tag imutável do commit para rastreabilidade e rollback).
+3. **`3. Deploy Automatizado (Render)` (`deploy`)**: depende de `imagem` e só executa em merges/pushes na `main`. Consome o segredo `RENDER_DEPLOY_HOOK_URL` armazenado no cofre do **GitHub Actions Secrets** e dispara via `POST` a atualização automática do serviço na nuvem (**Render**). O serviço está conectado ao repositório GitHub e recebe `ref=<SHA completo da execução>` no hook para reconstruir o commit aprovado usando o `Dockerfile`. O **Auto-Deploy** nativo do Git fica desativado no provedor para garantir que a publicação passe pela esteira verde.
+
+As execuções da `main` são serializadas. Execuções manuais usam um grupo de concorrência
+separado, preservando os pushes que aguardam publicação.
+
+### 🌐 Ambiente Público (Produção — Render)
+
+A aplicação está publicada e acessível publicamente em:
+
+🔗 **URL Pública:** [`https://rota-vital-api.onrender.com`](https://rota-vital-api.onrender.com)
+
+Exemplos de chamadas diretas ao ambiente em nuvem:
+
+```bash
+# Processamento sequencial (100 mil registros)
+curl "https://rota-vital-api.onrender.com/estatisticas/sequencial?tamanho=100000"
+
+# Processamento paralelo (100 mil registros com 4 threads)
+curl "https://rota-vital-api.onrender.com/estatisticas/paralelo?tamanho=100000&threads=4"
+
+# Consulta paginada ao histórico persistido no PostgreSQL em nuvem
+curl "https://rota-vital-api.onrender.com/historico?pagina=0&limite=20"
+```
+
+### Cofre de segredos e variáveis de ambiente
+
+- **No GitHub (`Settings → Secrets and variables → Actions`)**:
+  - `RENDER_DEPLOY_HOOK_URL`: URL original do webhook privado do Render, incluindo `?key=...`. O workflow acrescenta `&ref=<SHA completo>` a cada execução.
+  - `GITHUB_TOKEN`: token automático de escopo restrito (`packages: write`) para publicar a imagem no GHCR.
+- **No Render (`Environment Variables` do Web Service)**:
+  - `DB_URL`, `DB_USER`, `DB_PASSWORD`: credenciais internas do banco PostgreSQL gerenciado no Render.
+  - `PORT=8080` e `JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75`.
+
+### ⏪ Como fazer Rollback
+
+Caso uma versão publicada na `main` apresente regressão em produção, há **três formas documentadas de rollback**:
+
+1. **Rollback imediato pelo painel do Render (1 clique, sem novo build)**:
+   - Acesse o serviço `rota-vital-api` no painel do Render → menu **Events** (ou **Deploys**).
+   - Localize o deploy anterior estável e clique em **Rollback to this deploy**. O Render restaura instantaneamente o container da versão anterior.
+2. **Rollback por commit específico no Render**:
+   - Use o recurso de deploy de um commit específico do Render e informe o SHA completo de um commit estável. O serviço reconstrói essa versão a partir do repositório GitHub usando o `Dockerfile`.
+3. **Rollback via Git (GitHub Flow)**:
+   ```bash
+   git checkout main && git pull
+   git checkout -b fix/rollback-versao-anterior
+   git revert <SHA_DO_COMMIT_COM_PROBLEMA> --no-edit
+   git push -u origin fix/rollback-versao-anterior
+   ```
+   Abra o Pull Request para a `main`. Após os checks verdes e o merge, a própria esteira reconstrói e publica a versão revertida automaticamente.
+
+### 📸 Evidências da Esteira (E3)
+
+As evidências exigidas para a etapa **E3 — Deploy Automatizado** estão arquivadas em [`docs/evidencias/`](./docs/evidencias/):
+
+- **Execução vermelha barrando imagem e deploy** ([Run `#39083877310`](https://github.com/4ndrewss/Rota-Vital_Threads2/actions/runs/39083877310)): [`docs/evidencias/e3-pipeline-vermelho.png`](./docs/evidencias/e3-pipeline-vermelho.png)
+- **Execução verde validando testes e imagem Docker** ([Run `#39083580640`](https://github.com/4ndrewss/Rota-Vital_Threads2/actions/runs/39083580640)): [`docs/evidencias/e3-pipeline-verde.png`](./docs/evidencias/e3-pipeline-verde.png)
+- **Pull Request com checks da esteira e revisão** ([PR `#6`](https://github.com/4ndrewss/Rota-Vital_Threads2/pull/6)): [`docs/evidencias/e3-pr-pipeline.png`](./docs/evidencias/e3-pr-pipeline.png)
+- **Proteção da branch `main` (Branch Protection Rule + Status Check `1. Build e Testes` obrigatório)**: [`docs/evidencias/e3-branch-protection.png`](./docs/evidencias/e3-branch-protection.png) e [`docs/evidencias/e3-pr-branch-protegida.png`](./docs/evidencias/e3-pr-branch-protegida.png)
+- **URL pública no ar com persistência no PostgreSQL em nuvem** ([`https://rota-vital-api.onrender.com/historico`](https://rota-vital-api.onrender.com/historico)): [`docs/evidencias/e3-api-publica.png`](./docs/evidencias/e3-api-publica.png)
+
+---
+
+## 🧭 Tabela de Decisões do Projeto
+
+| Decisão | Escolha adotada | Alternativas consideradas | Por quê |
+| --- | --- | --- | --- |
+| **Imagem base** | `eclipse-temurin:21-jdk` (build) + `eclipse-temurin:21-jre-alpine` (runtime) e `postgres:16-alpine` | `openjdk`, `amazoncorretto`, imagem única com JDK completo | Multi-stage reduz a imagem final (~390 MB vs ~950 MB), remove JDK/Maven/código-fonte do runtime e roda com usuário não-root (`app`). |
+| **Persistência e dados** | PostgreSQL 16 em volume nomeado (`db-data`) no Compose e PostgreSQL gerenciado no Render | Banco apenas em memória (H2 em produção) ou bind mount local | Volume nomeado preserva o histórico (`execucao_historico`) entre reinícios/rebuilds dos containers sem depender de caminho fixo do host. |
+| **Estratégia de testes (TDD)** | JUnit 5 + MockMvc + H2 em memória (unitários, integração com repositório e aceitação HTTP) | Testcontainers em todos os testes ou apenas testes manuais | H2 em memória permite rodar toda a suíte em segundos no build do Docker e no GitHub Actions sem exigir daemon externo de banco. |
+| **Fluxo de branch** | **GitHub Flow** (`main` protegida + branches curtas `feat/`, `fix/`, `test/`, `chore/` + Pull Requests) | Git Flow (com `develop`/`release`) ou Trunk-Based com push direto na `main` | Simples para equipe acadêmica, exige revisão e check verde antes do merge e mantém a `main` sempre pronta para produção. |
+| **CI/CD e Deploy** | **GitHub Actions** (3 estágios: `testes` → `imagem GHCR` → `deploy`) + **Render** (Web Service Docker + PostgreSQL) | Railway, Fly.io, AWS ECS ou deploy manual via CLI | Integração nativa com o repositório, publicação de imagens versionadas por SHA no GHCR e deploy gratuito acionado apenas com esteira 100% verde via Deploy Hook. |
+| **Gestão de segredos** | `.env` ignorado no Git (`.env.example` versionado) + **GitHub Actions Secrets** + **Render Environment Variables** | Variáveis fixas no `application.properties` ou `compose.yaml` | Garante que nenhuma senha real ou webhook de deploy vaze no histórico do repositório ou nas camadas da imagem Docker. |
+
+---
+
 ## 🤖 Uso de IA
 
 Declaração exigida pelo [CONTRIBUTING](./CONTRIBUTING.md#9-uso-de-ia). Os testes, o código, o
@@ -282,7 +366,13 @@ workflow de CI e a documentação inicial do PI foram rascunhados pelo Claude (C
 lidos e validados pelo grupo antes do merge. O prompt usado e os limites do que foi verificado
 estão em [docs/pi-tdd.md](./docs/pi-tdd.md#uso-de-ia). Os ajustes de limites de recursos,
 paginação e Javadoc foram preparados pelo CodeRabbit Coding Agent a pedido do grupo e
-também aguardam validação humana.
+também aguardam validação humana. A evolução da esteira para CI/CD completo com publicação no GHCR,
+deploy automatizado no Render, guia de rollback e tabela de decisões (E3) foi estruturada com apoio
+do Gemini (Antigravity) a partir do prompt: *"Estruturar o pipeline completo de CI/CD no GitHub Actions
+(build e testes -> imagem Docker no GHCR com tags latest e SHA -> deploy via Deploy Hook no Render com
+segredos no GitHub Secrets) e documentar decisões e rollback no README"*, revisado e validado pela equipe.
+As correções de concorrência e de deploy por commit foram preparadas pelo CodeRabbit Coding Agent
+a pedido do grupo: *"separar as execuções manuais e enviar o commit exato pelo parâmetro ref"*.
 
 ---
 
