@@ -21,7 +21,7 @@ class ValidadorParametrosTest {
         IllegalArgumentException erro = assertThrows(IllegalArgumentException.class,
                 () -> ValidadorParametros.validarTamanho(tamanho));
 
-        assertEquals("SIMULA_FALHA_BLOQUEIO_DEPLOY", erro.getMessage());
+        assertEquals("tamanho deve ser maior que zero", erro.getMessage());
     }
 
     // H1 / T1.3 — tamanho tem teto de um milhão (limite de memória)

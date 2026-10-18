@@ -331,6 +331,14 @@ Caso uma versão publicada na `main` apresente regressão em produção, há **t
    ```
    Abra o Pull Request para a `main`. Após os checks verdes e o merge, a própria esteira reconstrói e publica a versão revertida automaticamente.
 
+### 📸 Evidências da Esteira (E3)
+
+As evidências exigidas para a etapa **E3 — Deploy Automatizado** estão arquivadas em [`docs/evidencias/`](./docs/evidencias/):
+
+- **Execução vermelha barrando imagem e deploy** ([Run `#39083877310`](https://github.com/4ndrewss/Rota-Vital_Threads2/actions/runs/39083877310)): [`docs/evidencias/e3-pipeline-vermelho.png`](./docs/evidencias/e3-pipeline-vermelho.png)
+- **Execução verde validando testes e imagem Docker** ([Run `#39083580640`](https://github.com/4ndrewss/Rota-Vital_Threads2/actions/runs/39083580640)): [`docs/evidencias/e3-pipeline-verde.png`](./docs/evidencias/e3-pipeline-verde.png)
+- **Pull Request com checks da esteira e revisão** ([PR `#6`](https://github.com/4ndrewss/Rota-Vital_Threads2/pull/6)): [`docs/evidencias/e3-pr-pipeline.png`](./docs/evidencias/e3-pr-pipeline.png)
+
 ---
 
 ## 🧭 Tabela de Decisões do Projeto
