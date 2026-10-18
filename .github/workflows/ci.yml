@@ -102,7 +102,7 @@ jobs:
           fi
           echo "Disparando deploy automatizado no Render..."
           # Serviço conectado ao GitHub: a URL do hook já contém ?key=.
-          HTTP_STATUS=$(curl -s -o /tmp/render_response.txt -w "%{http_code}" -X POST "${RENDER_DEPLOY_HOOK_URL}&ref=${DEPLOY_REF}")
+          HTTP_STATUS=$(curl --fail --silent --show-error --connect-timeout 10 --max-time 60 -o /tmp/render_response.txt -w "%{http_code}" -X POST "${RENDER_DEPLOY_HOOK_URL}&ref=${DEPLOY_REF}")
           cat /tmp/render_response.txt
           echo ""
           if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
