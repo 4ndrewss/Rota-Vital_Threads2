@@ -107,3 +107,5 @@ Declaração exigida pelo [CONTRIBUTING](./CONTRIBUTING.md#9-uso-de-ia); tudo fo
 📋 Gestão no [Trello da equipe](https://trello.com/b/nTGVCC8F/rota-vitalinfra). Fluxo de branches
 e commits no [CONTRIBUTING](./CONTRIBUTING.md). Convenções: tempos em milissegundos, código e
 comentários em português, indentação com tab.
+
+![Quadro do Trello da equipe](./docs/evidencias/trello-quadro.png)
