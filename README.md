@@ -116,6 +116,48 @@ Caso ocorra `OutOfMemoryError`, execute a aplicação com `-Xmx2g`.
 
 ---
 
+## 🧪 Testes automatizados (E2)
+
+O projeto possui testes de **regras de negócio**, **integração com o banco em memória** e
+**aceitação dos endpoints HTTP**. Eles estão em [`src/test/java/`](./src/test/java/)
+e utilizam JUnit, recursos de teste do Spring e H2. **Não é necessário subir o PostgreSQL
+para rodar a suíte de testes.**
+
+Na raiz do repositório, execute:
+
+```bash
+./mvnw test
+```
+
+No Windows (Prompt de Comando ou PowerShell):
+
+```bat
+mvnw.cmd test
+```
+
+Para executar somente os testes da validação de parâmetros, por exemplo:
+
+```bash
+./mvnw -B -Dtest=ValidadorParametrosTest test
+```
+
+| O que é verificado | Exemplos no repositório |
+| --- | --- |
+| Regras de processamento e validação | [`EstatisticaServiceTest`](./src/test/java/io/github/_ndrewss/rota_vital/service/EstatisticaServiceTest.java) e [`ValidadorParametrosTest`](./src/test/java/io/github/_ndrewss/rota_vital/util/ValidadorParametrosTest.java) |
+| Gravação e consulta do histórico | [`HistoricoServiceTest`](./src/test/java/io/github/_ndrewss/rota_vital/service/HistoricoServiceTest.java) e [`ExecucaoHistoricoRepositoryIntegracaoTest`](./src/test/java/io/github/_ndrewss/rota_vital/repository/ExecucaoHistoricoRepositoryIntegracaoTest.java) |
+| Requisições HTTP, respostas e limites | [`EstatisticaControllerTest`](./src/test/java/io/github/_ndrewss/rota_vital/controller/EstatisticaControllerTest.java), [`HistoricoAceitacaoTest`](./src/test/java/io/github/_ndrewss/rota_vital/controller/HistoricoAceitacaoTest.java) e [`LimitesRecursosAceitacaoTest`](./src/test/java/io/github/_ndrewss/rota_vital/controller/LimitesRecursosAceitacaoTest.java) |
+
+A mesma suíte é executada automaticamente pelo [GitHub Actions](./.github/workflows/ci.yml)
+com `./mvnw -B test`. Se falhar, os jobs seguintes de imagem e deploy não começam.
+
+O relato de TDD (*vermelho → verde*), as histórias H1–H3 e as limitações da validação histórica
+estão em [`docs/pi-tdd.md`](./docs/pi-tdd.md). **Nem todos os pares antigos de commits
+foram comprovados como TDD**; o documento distingue testes feitos antes do código daqueles
+criados depois. O histórico de execuções da pipeline pode ser consultado em
+[Actions do repositório](https://github.com/4ndrewss/Rota-Vital_Threads2/actions).
+
+---
+
 ## ✅ Escopo entregue
 
 - Cálculo de estatísticas por hospital (sequencial e paralelo)
@@ -346,6 +388,23 @@ As evidências exigidas para a etapa **E3 — Deploy Automatizado** estão arqui
 
 ---
 
+## 📁 Evidências e resultados para a entrega
+
+Os arquivos de comprovação já incluídos no repositório estão organizados abaixo.
+Isso evita repetir imagens grandes no corpo do README.
+
+| Etapa | Evidências e documentação |
+| --- | --- |
+| **E1 — Container automatizado** | [API e banco saudáveis no Compose](./docs/evidencias/e1-compose-ps.png) · [healthcheck da API](./docs/evidencias/e1-api-health.png) · [requisição sequencial](./docs/evidencias/e1-api-sequencial.png) |
+| **E2 — TDD e testes** | [Histórias, regras, testes e registro do processo TDD](./docs/pi-tdd.md) · [código-fonte dos testes](./src/test/java/) · [execuções do GitHub Actions](https://github.com/4ndrewss/Rota-Vital_Threads2/actions) |
+| **E3 — Deploy automatizado** | [Pipeline verde](./docs/evidencias/e3-pipeline-verde.png) · [Pipeline vermelha](./docs/evidencias/e3-pipeline-vermelho.png) · [PR e checks](./docs/evidencias/e3-pr-pipeline.png) · [Proteção da branch](./docs/evidencias/e3-branch-protection.png) · [API pública](./docs/evidencias/e3-api-publica.png) |
+| **Comparação de desempenho** | [Resultados de benchmark (JSON)](./metricas/benchmark_results.json) · [Planilha de métricas (Excel)](./metricas/metricas_desempenho_rota_vital.xlsx) · [Relatório de QA e métricas](./metricas/relatorio_qa_metricas.md) · [Relatório técnico em PDF](./docs/relatorio_rota_vital.pdf) |
+
+As evidências E3 também estão detalhadas, com links para Pull Requests e execuções específicas,
+na seção [Pipeline CI/CD, Deploy Automatizado e Rollback (E3)](#-pipeline-cicd-deploy-automatizado-e-rollback-e3).
+
+---
+
 ## 🧭 Tabela de Decisões do Projeto
 
 | Decisão | Escolha adotada | Alternativas consideradas | Por quê |
@@ -376,7 +435,7 @@ a pedido do grupo: *"separar as execuções manuais e enviar o commit exato pelo
 
 ---
 
-## 👥 Membros da Equipe
+## 👥 Integrantes
 
 | Integrante | GitHub |
 |---|---|
@@ -394,7 +453,7 @@ a pedido do grupo: *"separar as execuções manuais e enviar o commit exato pelo
 O acompanhamento das etapas de construção do Rota Vital, a divisão técnica da equipe e o backlog
 do projeto foram gerenciados via Trello.
 
-📋 **Acesso ao Quadro:** [Acessar Trello da Equipe](https://trello.com/b/nTGVCC8F/rota-vitalthreads2)
+📋 **Acesso ao Quadro:** [Acessar Trello da Equipe](https://trello.com/b/nTGVCC8F/rota-vitalinfra)
 
 <img width="1914" height="846" alt="image" src="https://github.com/user-attachments/assets/c060417c-996a-44bd-a18e-3e4e4f50c8f5" />
 
@@ -408,7 +467,18 @@ do projeto foram gerenciados via Trello.
 
 ---
 
-## 📄 Relatório Técnico
+## 📄 Relatório Técnico (Threads2)
 
 O relatório completo com justificativa, metodologia, resultados e análise está disponível em:
 [`relatorio_rota_vital.pdf`](./docs/relatorio_rota_vital.pdf)
+
+---
+
+## 🎓 Entrega no Classroom
+
+Para a entrega final, enviar **os dois links** solicitados no Classroom:
+
+| Item | Link |
+| --- | --- |
+| **Repositório GitHub** | [Rota-Vital_Threads2](https://github.com/4ndrewss/Rota-Vital_Threads2) |
+| **URL pública da API** | [https://rota-vital-api.onrender.com](https://rota-vital-api.onrender.com) |
