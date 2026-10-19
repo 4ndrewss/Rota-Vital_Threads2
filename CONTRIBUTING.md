@@ -23,7 +23,7 @@ docker compose up -d --build
 ```
 
 A API fica em `http://localhost:8080`. Detalhes (variáveis, volume, decisões) no
-[README](./README.md#-como-executar-com-docker).
+[docs/docker.md](./docs/docker.md).
 
 **Rodando a API pela IDE / `./mvnw`** (para debugar): a aplicação espera um PostgreSQL em
 `localhost:5432`. Suba só um banco avulso:

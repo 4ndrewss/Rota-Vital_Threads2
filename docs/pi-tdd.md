@@ -138,7 +138,7 @@ Se algum teste ficar de um jeito diferente do esperado, corrija e anote aqui.
 
 A pedido do grupo, o CodeRabbit Coding Agent preparou Javadoc para os métodos do PR,
 paginação no banco, limites de tamanho/threads, admissão por taxa/concorrência e um orçamento
-de registros que preserva o histórico existente. Os valores e a operação estão no README.
+de registros que preserva o histórico existente. Os valores e a operação estão em [docs/api.md](./api.md#limites-de-recursos).
 A revisão do PR #5 corrigiu o isolamento de cotas por IP e manteve os cálculos disponíveis
 mesmo quando não é possível gravar. A resposta informa `historicoRegistrado` e um aviso se
 necessário; nenhum registro existente é apagado. O teto global de concorrência e o orçamento
