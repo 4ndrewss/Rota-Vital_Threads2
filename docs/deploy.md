@@ -13,13 +13,12 @@ Actions em três estágios encadeados (`needs:`). Se um falha, os seguintes não
 
 As execuções da `main` são serializadas; execuções manuais usam outro grupo de concorrência.
 
-**API pública:** <https://rota-vital-api.onrender.com> (ex.: `/historico?pagina=0&limite=20`).
+## API pública:
 
-
-| URL ou Caminho | O que faz |
-|---|---|
-| https://rota-vital-api.onrender.com | Página principal. Não exibe nada (retorna erro 404), pois é uma aplicação apenas backend, sem front. |
-| https://rota-vital-api.onrender.com/historico | Retorna o histórico completo das execuções salvas, sem limite de exibição. |
+| Caminho | O que faz |
+| :--- | :--- |
+| https://rota-vital-api.onrender.com | Não há página inicial; a aplicação disponibiliza uma API. |
+| https://rota-vital-api.onrender.com/historico | Retorna a primeira página, com até 20 registros, dos mais recentes para os mais antigos. Não retorna o histórico completo. |
 | https://rota-vital-api.onrender.com/historico?pagina=0&limite=20 | Histórico paginado: lista as execuções salvas no banco, 20 por página (`pagina` = número da página, `limite` = itens por página). |
 | https://rota-vital-api.onrender.com/estatisticas/sequencial?tamanho=100000 | Cálculo sequencial: processa 100000 elementos (`tamanho`) em uma única thread e grava o resultado no Postgres do Render. |
 | https://rota-vital-api.onrender.com/estatisticas/paralelo?tamanho=100000&threads=4 | Cálculo paralelo: processa 100000 elementos usando 4 threads (`threads`) e grava o resultado no Postgres do Render. |
@@ -28,7 +27,7 @@ As execuções da `main` são serializadas; execuções manuais usam outro grupo
 ## Segredos
 
 | Onde | O quê |
-| --- | --- |
+| :--- | :--- |
 | GitHub → *Settings → Secrets and variables → Actions* | `RENDER_DEPLOY_HOOK_URL` (URL do hook com `?key=...`) |
 | GitHub (automático) | `GITHUB_TOKEN` com `packages: write` para publicar no GHCR |
 | Render → *Environment Variables* | `DB_URL`, `DB_USER`, `DB_PASSWORD`, `PORT=8080`, `JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75` |
