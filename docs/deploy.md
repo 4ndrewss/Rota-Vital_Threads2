@@ -15,12 +15,15 @@ As execuções da `main` são serializadas; execuções manuais usam outro grupo
 
 **API pública:** <https://rota-vital-api.onrender.com> (ex.: `/historico?pagina=0&limite=20`).
 
-/*
-Espaço reservado para registrar os caminhos das pastas no Render
-e os comandos ou prompts úteis para utilizar o serviço.
-Adicionar as informações aqui, sem repetir as instruções de deploy deste arquivo.
-Recomenda-se uso de uma tabela com títulos URL ou Caminho e Explicação ou O que faz
-*/
+
+| URL ou Caminho | O que faz |
+|---|---|
+| https://rota-vital-api.onrender.com | Página principal. Não exibe nada (retorna erro 404), pois é uma aplicação apenas backend, sem front. |
+| https://rota-vital-api.onrender.com/historico | Retorna o histórico completo das execuções salvas, sem limite de exibição. |
+| https://rota-vital-api.onrender.com/historico?pagina=0&limite=20 | Histórico paginado: lista as execuções salvas no banco, 20 por página (`pagina` = número da página, `limite` = itens por página). |
+| https://rota-vital-api.onrender.com/estatisticas/sequencial?tamanho=100000 | Cálculo sequencial: processa 100000 elementos (`tamanho`) em uma única thread e grava o resultado no Postgres do Render. |
+| https://rota-vital-api.onrender.com/estatisticas/paralelo?tamanho=100000&threads=4 | Cálculo paralelo: processa 100000 elementos usando 4 threads (`threads`) e grava o resultado no Postgres do Render. |
+
 
 ## Segredos
 
