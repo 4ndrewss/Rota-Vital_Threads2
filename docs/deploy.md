@@ -15,6 +15,12 @@ As execuções da `main` são serializadas; execuções manuais usam outro grupo
 
 **API pública:** <https://rota-vital-api.onrender.com> (ex.: `/historico?pagina=0&limite=20`).
 
+/*
+Espaço reservado para Gabriela registrar os caminhos das pastas no Render
+e os comandos ou prompts úteis para utilizar o serviço.
+Adicionar as informações aqui, sem repetir as instruções de deploy deste arquivo.
+*/
+
 ## Segredos
 
 | Onde | O quê |
