@@ -6,6 +6,17 @@ das execuções no PostgreSQL. Roda em container e é publicada automaticamente 
 
 🔗 **API pública:** <https://rota-vital-api.onrender.com>
 
+## 👥 Integrantes
+
+| Integrante | GitHub |
+|---|---|
+| Andrews Queiroz | [@4ndrewss](https://github.com/4ndrewss) |
+| Caio Gilles | [@CaioGilles](https://github.com/CaioGilles) |
+| Enzo Amorim | [@ENZOBRS](https://github.com/ENZOBRS) |
+| Gabriela Bayo | [@gabibayo](https://github.com/gabibayo) |
+| Glauco Santos | [@glaucosantos002](https://github.com/glaucosantos002) |
+| Gustavo Veloso | [@velosogustavo](https://github.com/velosogustavo) |
+
 ## 🚀 Como executar
 
 **Com Docker** (recomendado, sobe API + PostgreSQL):
@@ -93,19 +104,13 @@ Declaração exigida pelo [CONTRIBUTING](./CONTRIBUTING.md#9-uso-de-ia); tudo fo
   latest e SHA -> deploy via Deploy Hook no Render com segredos no GitHub Secrets) e documentar
   decisões e rollback no README"*).
 
-## 👥 Integrantes
-
-| Integrante | GitHub |
-|---|---|
-| Andrews Queiroz | [@4ndrewss](https://github.com/4ndrewss) |
-| Caio Gilles | [@CaioGilles](https://github.com/CaioGilles) |
-| Enzo Amorim | [@ENZOBRS](https://github.com/ENZOBRS) |
-| Gabriela Bayo | [@gabibayo](https://github.com/gabibayo) |
-| Glauco Santos | [@glaucosantos002](https://github.com/glaucosantos002) |
-| Gustavo Veloso | [@velosogustavo](https://github.com/velosogustavo) |
-
-📋 Gestão no [Trello da equipe](https://trello.com/b/nTGVCC8F/rota-vitalinfra). Fluxo de branches
-e commits no [CONTRIBUTING](./CONTRIBUTING.md). Convenções: tempos em milissegundos, código e
-comentários em português, indentação com tab.
+## 📋 Gestão e Organização
+* A Gestão do nosso projeto você pode acompanhar no [Trello da nossa equipe.](https://trello.com/b/nTGVCC8F/rota-vitalinfra).
+* Fluxo de branches e commits no [CONTRIBUTING](./CONTRIBUTING.md).
+* Convenções: tempos em milissegundos, código e comentários em português, indentação com tab.
 
 ![Quadro do Trello da equipe](./docs/evidencias/trello-quadro.png)
+
+
+
+
