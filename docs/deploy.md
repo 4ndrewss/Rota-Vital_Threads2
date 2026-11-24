@@ -13,12 +13,25 @@ Actions em três estágios encadeados (`needs:`). Se um falha, os seguintes não
 
 As execuções da `main` são serializadas; execuções manuais usam outro grupo de concorrência.
 
-**API pública:** <https://rota-vital-api.onrender.com> (ex.: `/historico?pagina=0&limite=20`).
+## API pública
+
+| Caminho | O que faz |
+| :--- | :--- |
+| https://rota-vital-api.onrender.com | Não há página inicial; a aplicação disponibiliza uma API. |
+| https://rota-vital-api.onrender.com/historico | Retorna a primeira página, com até 20 registros, dos mais recentes para os mais antigos. |
+| https://rota-vital-api.onrender.com/historico?pagina=0&limite=20 | Histórico paginado: retorna até 20 registros da primeira página. `pagina` começa em 0 e aceita valores até 10000; `limite` define os itens por página e aceita de 1 a 100. |
+| https://rota-vital-api.onrender.com/estatisticas/sequencial?tamanho=100000 | Cálculo sequencial: processa 100000 requisições simuladas (`tamanho`) em uma única thread e retorna as estatísticas calculadas. |
+| https://rota-vital-api.onrender.com/estatisticas/paralelo?tamanho=100000&threads=4 | Cálculo paralelo: processa 100000 requisições simuladas (`tamanho`) usando 4 threads (`threads`) e retorna as estatísticas calculadas. |
+
+Nos dois cálculos, a API tenta registrar no PostgreSQL do Render os dados da execução
+(tipo, tamanho, quantidade de threads, tempo de processamento e data/hora). O campo
+`historicoRegistrado` da resposta informa se a gravação funcionou; quando não funciona,
+o cálculo ainda é retornado, acompanhado do campo `aviso`.
 
 ## Segredos
 
 | Onde | O quê |
-| --- | --- |
+| :--- | :--- |
 | GitHub → *Settings → Secrets and variables → Actions* | `RENDER_DEPLOY_HOOK_URL` (URL do hook com `?key=...`) |
 | GitHub (automático) | `GITHUB_TOKEN` com `packages: write` para publicar no GHCR |
 | Render → *Environment Variables* | `DB_URL`, `DB_USER`, `DB_PASSWORD`, `PORT=8080`, `JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75` |
