@@ -53,7 +53,8 @@ e, se falhar, barra a imagem e o deploy.
 ```
 src/main/java/io/github/_ndrewss/rota_vital/
 ├── compartilhado/
-│   └── apresentacao/        # ApiExceptionHandler, LimiteRequisicoesFilter (taxa e concorrência)
+│   ├── apresentacao/        # ApiExceptionHandler (erros -> HTTP), LimiteRequisicoesFilter (taxa e concorrência)
+│   └── negocio/aplicacao/   # RelogioConfiguracao (bean java.time.Clock)
 ├── estatistica/
 │   ├── apresentacao/        # EstatisticaController, HistoricoController
 │   ├── negocio/aplicacao/   # EstatisticaService (sequencial/paralelo), HistoricoService, ValidadorParametros
@@ -61,10 +62,20 @@ src/main/java/io/github/_ndrewss/rota_vital/
 │   └── dados/               # ExecucaoHistoricoRepository, GeradorRequisicoes
 ├── requisicao/
 │   └── negocio/dominio/     # Requisicao
-├── estoque/                 # ainda sem classes
+├── estoque/
+│   ├── apresentacao/        # EstoqueController (/estoque/bolsas) e DTOs de request/response
+│   ├── negocio/aplicacao/   # RegistrarBolsa, ConsultarBolsas, ReservarBolsa (usa Clock)
+│   ├── negocio/dominio/     # Bolsa (raiz), TipoSanguineo, Validade, Reserva, BolsaRepository (porta),
+│   │                        # BolsaVencida, BolsaJaReservada, BolsaNaoEncontrada; sem Spring nem JPA
+│   └── dados/               # BolsaRepositoryJpa, BolsaJpa (tabela bolsa), BolsaMapper, Spring Data interno
 └── expedicao/               # ainda sem classes
 src/test/java/...  # mesmos pacotes: *Test (unitário), *IntegracaoTest, *AceitacaoTest e *HttpTest
 ```
+
+No Estoque, o domínio é puro (sem Spring nem `jakarta.persistence`): a persistência fica em
+`estoque/dados`, que converte `Bolsa` em `BolsaJpa` pelo mapper. Erros do Estoque viram HTTP no
+`ApiExceptionHandler`: dados inválidos 400, bolsa inexistente 404, já reservada 409, vencida 422.
+Uma bolsa vence no dia seguinte à data de validade (no próprio dia ainda pode ser reservada).
 
 Cada contexto tem os subpacotes `apresentacao`, `negocio/aplicacao`, `negocio/dominio` e `dados`;
 os que ainda não têm classes contêm só um `package-info.java`.
@@ -133,6 +144,9 @@ Declaração exigida pelo [CONTRIBUTING](./CONTRIBUTING.md#9-uso-de-ia); tudo fo
   Fez também a reorganização dos pacotes por contexto, com a seção de arquitetura deste README
   (prompt: *"Você vai executar quatro cartões de refatoração do projeto rota-vital (Java, Spring, Maven).
   O objetivo é reorganizar os pacotes em contextos, sem mudar nenhum comportamento."*).
+  Implementou o domínio do Estoque com TDD, cartões #07 a #12, com commits test/feat/refactor
+  (prompt: *"Você vai executar a Fase 2 do projeto rota-vital: o domínio do Estoque, com TDD.
+  São os cartões #07 a #12."*).
 - **CodeRabbit Coding Agent:** limites de recursos, paginação, Javadoc e as correções de concorrência
   e deploy por commit (*"separar as execuções manuais e enviar o commit exato pelo parâmetro ref"*).
 - **Gemini (Antigravity):** pipeline CI/CD e documentação de decisões e rollback (*"Estruturar o
