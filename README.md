@@ -130,6 +130,9 @@ Declaração exigida pelo [CONTRIBUTING](./CONTRIBUTING.md#9-uso-de-ia); tudo fo
 - **Claude (Claude Code):** testes, código, workflow de CI e documentação inicial do PI. Prompt e
   limites em [docs/pi-tdd.md](./docs/pi-tdd.md#uso-de-ia). Também enxugou este README e separou os
   detalhes em `docs/` (prompt: *"enxugar a documentação o máximo possível e remover o que era da entrega de Threads 2"*).
+  Fez também a reorganização dos pacotes por contexto, com a seção de arquitetura deste README
+  (prompt: *"Você vai executar quatro cartões de refatoração do projeto rota-vital (Java, Spring, Maven).
+  O objetivo é reorganizar os pacotes em contextos, sem mudar nenhum comportamento."*).
 - **CodeRabbit Coding Agent:** limites de recursos, paginação, Javadoc e as correções de concorrência
   e deploy por commit (*"separar as execuções manuais e enviar o commit exato pelo parâmetro ref"*).
 - **Gemini (Antigravity):** pipeline CI/CD e documentação de decisões e rollback (*"Estruturar o
