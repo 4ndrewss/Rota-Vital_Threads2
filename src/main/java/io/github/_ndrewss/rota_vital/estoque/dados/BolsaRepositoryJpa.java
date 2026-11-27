@@ -9,21 +9,28 @@ import org.springframework.stereotype.Repository;
 import io.github._ndrewss.rota_vital.estoque.negocio.dominio.Bolsa;
 import io.github._ndrewss.rota_vital.estoque.negocio.dominio.BolsaRepository;
 
+/** Implementação JPA da porta {@link BolsaRepository}, convertendo com {@link BolsaMapper}. */
 @Repository
 public class BolsaRepositoryJpa implements BolsaRepository {
 
+    private final BolsaJpaSpringRepository jpa;
+
+    BolsaRepositoryJpa(BolsaJpaSpringRepository jpa) {
+        this.jpa = jpa;
+    }
+
     @Override
     public Bolsa salvar(Bolsa bolsa) {
-        throw new UnsupportedOperationException("não implementado");
+        return BolsaMapper.paraDominio(jpa.save(BolsaMapper.paraJpa(bolsa)));
     }
 
     @Override
     public Optional<Bolsa> buscarPorId(UUID id) {
-        throw new UnsupportedOperationException("não implementado");
+        return jpa.findById(id).map(BolsaMapper::paraDominio);
     }
 
     @Override
     public List<Bolsa> listar() {
-        throw new UnsupportedOperationException("não implementado");
+        return jpa.findAllByOrderByValidadeAscIdAsc().stream().map(BolsaMapper::paraDominio).toList();
     }
 }
