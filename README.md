@@ -52,14 +52,47 @@ e, se falhar, barra a imagem e o deploy.
 
 ```
 src/main/java/io/github/_ndrewss/rota_vital/
-├── controller/   # EstatisticaController, HistoricoController, ApiExceptionHandler
-├── model/        # Requisicao, EstatisticaHospital, ExecucaoHistorico
-├── repository/   # ExecucaoHistoricoRepository
-├── security/     # LimiteRequisicoesFilter (taxa e concorrência)
-├── service/      # EstatisticaService (sequencial/paralelo), HistoricoService
-└── util/         # GeradorRequisicoes, ValidadorParametros
+├── compartilhado/
+│   └── apresentacao/        # ApiExceptionHandler, LimiteRequisicoesFilter (taxa e concorrência)
+├── estatistica/
+│   ├── apresentacao/        # EstatisticaController, HistoricoController
+│   ├── negocio/aplicacao/   # EstatisticaService (sequencial/paralelo), HistoricoService, ValidadorParametros
+│   ├── negocio/dominio/     # EstatisticaHospital, ExecucaoHistorico
+│   └── dados/               # ExecucaoHistoricoRepository, GeradorRequisicoes
+├── requisicao/
+│   └── negocio/dominio/     # Requisicao
+├── estoque/                 # ainda sem classes
+└── expedicao/               # ainda sem classes
 src/test/java/...  # mesmos pacotes: *Test (unitário), *IntegracaoTest, *AceitacaoTest e *HttpTest
 ```
+
+Cada contexto tem os subpacotes `apresentacao`, `negocio/aplicacao`, `negocio/dominio` e `dados`;
+os que ainda não têm classes contêm só um `package-info.java`.
+
+## 🏛️ Arquitetura e dependências entre contextos
+
+O projeto é uma única aplicação Spring Boot, organizada em pacotes por contexto. O desenho dos
+contextos está no [mapa de contextos](./docs/arquitetura/Mapa_de_contextos.png).
+
+**Entre contextos**, a única dependência no código hoje é Estatística → Requisição:
+
+- A Estatística **nunca altera** uma `Requisicao` existente: o `EstatisticaService` usa apenas
+  getters para calcular.
+- A Estatística **cria** objetos `Requisicao` novos: o `GeradorRequisicoes` (`estatistica/dados`)
+  monta em memória a massa de dados sintética de cada cálculo. Eles não são gravados no banco.
+- A Requisição não depende da Estatística.
+- A classe `Requisicao` ainda tem setters públicos, então o compilador não impede alterações; a
+  regra é uma convenção a conferir na revisão.
+
+**Entre camadas:**
+
+- `negocio/dominio` não importa apresentação, aplicação, dados nem `org.springframework.web`.
+  Anotações JPA (`jakarta.persistence`) são aceitas.
+- `apresentacao` usa `negocio/aplicacao` e `negocio/dominio`; o `EstatisticaController` também chama
+  o `GeradorRequisicoes`, em `dados`.
+- `negocio/aplicacao` usa `negocio/dominio`; o `HistoricoService` também usa o
+  `ExecucaoHistoricoRepository`, em `dados`, e lança `ResponseStatusException`, do Spring Web.
+- `dados` usa `negocio/dominio`.
 
 ## 🗺️ Story map do PI
 
@@ -97,6 +130,9 @@ Declaração exigida pelo [CONTRIBUTING](./CONTRIBUTING.md#9-uso-de-ia); tudo fo
 - **Claude (Claude Code):** testes, código, workflow de CI e documentação inicial do PI. Prompt e
   limites em [docs/pi-tdd.md](./docs/pi-tdd.md#uso-de-ia). Também enxugou este README e separou os
   detalhes em `docs/` (prompt: *"enxugar a documentação o máximo possível e remover o que era da entrega de Threads 2"*).
+  Fez também a reorganização dos pacotes por contexto, com a seção de arquitetura deste README
+  (prompt: *"Você vai executar quatro cartões de refatoração do projeto rota-vital (Java, Spring, Maven).
+  O objetivo é reorganizar os pacotes em contextos, sem mudar nenhum comportamento."*).
 - **CodeRabbit Coding Agent:** limites de recursos, paginação, Javadoc e as correções de concorrência
   e deploy por commit (*"separar as execuções manuais e enviar o commit exato pelo parâmetro ref"*).
 - **Gemini (Antigravity):** pipeline CI/CD e documentação de decisões e rollback (*"Estruturar o

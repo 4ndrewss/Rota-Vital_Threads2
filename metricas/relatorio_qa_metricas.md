@@ -9,7 +9,7 @@ Este documento sumariza a homologação completa de QA, execução dos testes po
 | Verificação | Status | Observações |
 | :--- | :---: | :--- |
 | **Instalação do JDK 21** | ✅ Sucesso | Eclipse Adoptium OpenJDK 21 LTS configurado no ambiente. |
-| **Build & Testes Unitários** | ✅ 7/7 Aprovados | Todos os testes em [`EstatisticaServiceTest`](file:///C:/Users/cgcms/.gemini/antigravity/scratch/Rota-Vital_Threads2/src/test/java/io/github/_ndrewss/rota_vital/service/EstatisticaServiceTest.java) passaram sem erros ou race conditions. |
+| **Build & Testes Unitários** | ✅ 7/7 Aprovados | Todos os testes em [`EstatisticaServiceTest`](../src/test/java/io/github/_ndrewss/rota_vital/estatistica/negocio/aplicacao/EstatisticaServiceTest.java) passaram sem erros ou race conditions. |
 | **Endpoint Sequencial** | ✅ 200 OK | `GET /estatisticas/sequencial?tamanho={tamanho}` validado. |
 | **Endpoint Paralelo** | ✅ 200 OK | `GET /estatisticas/paralelo?tamanho={tamanho}&threads={N}` validado para 2, 4 e 8 threads. |
 | **Consistência dos Dados** | ✅ Idênticos | Resultados de soma, total e média de atendimento por hospital batem exatamente entre sequencial e paralelo. |

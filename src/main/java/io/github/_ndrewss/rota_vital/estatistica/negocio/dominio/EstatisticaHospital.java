@@ -1,0 +1,36 @@
+package io.github._ndrewss.rota_vital.estatistica.negocio.dominio;
+
+public class EstatisticaHospital {
+
+    private int totalRequisicoes;
+    private Long somaTempoAtendimento;
+
+    public EstatisticaHospital(){
+        totalRequisicoes = 0;
+        somaTempoAtendimento = 0L;
+    }
+
+    public void adicionar(long tempoAtendimento){
+        totalRequisicoes = totalRequisicoes + 1;
+        somaTempoAtendimento = somaTempoAtendimento + tempoAtendimento;
+    }
+
+    /** Soma os totais de outra estatística parcial do mesmo hospital (usado na agregação paralela). */
+    public void somar(EstatisticaHospital outra){
+        totalRequisicoes = totalRequisicoes + outra.totalRequisicoes;
+        somaTempoAtendimento = somaTempoAtendimento + outra.somaTempoAtendimento;
+    }
+
+    public Long getMedia(){
+        return somaTempoAtendimento / totalRequisicoes;
+    }
+
+    public int getTotalRequisicoes(){
+        return totalRequisicoes;
+    }
+
+    public Long getSomaTempoAtendimento(){
+        return somaTempoAtendimento;
+    }
+    
+}
