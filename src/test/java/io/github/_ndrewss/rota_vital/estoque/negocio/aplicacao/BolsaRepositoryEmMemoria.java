@@ -14,10 +14,10 @@ import io.github._ndrewss.rota_vital.estoque.negocio.dominio.BolsaRepository;
  * Repositório falso para os testes dos casos de uso (sem Spring, sem banco e sem Mockito).
  * Guarda cópias, como um banco faria: mudar a Bolsa devolvida não muda o que está gravado.
  */
-class BolsaRepositoryEmMemoria implements BolsaRepository {
+public class BolsaRepositoryEmMemoria implements BolsaRepository {
 
     private final Map<UUID, Bolsa> bolsas = new LinkedHashMap<>();
-    int salvamentos;
+    public int salvamentos;
 
     @Override
     public Bolsa salvar(Bolsa bolsa) {

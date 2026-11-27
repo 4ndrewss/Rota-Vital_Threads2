@@ -7,6 +7,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.github._ndrewss.rota_vital.estoque.negocio.dominio.BolsaJaReservada;
+import io.github._ndrewss.rota_vital.estoque.negocio.dominio.BolsaNaoEncontrada;
+import io.github._ndrewss.rota_vital.estoque.negocio.dominio.BolsaVencida;
+
 /**
  * Transforma exceções de validação em respostas HTTP claras.
  * Sem isto, um parâmetro inválido virava erro 500 (erro do servidor); com isto vira
@@ -25,5 +29,17 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, String>> indisponivel(ResponseStatusException e) {
         return ResponseEntity.status(e.getStatusCode()).body(Map.of("erro", e.getReason() == null ? "serviço indisponível" : e.getReason()));
+    }
+
+    public ResponseEntity<Map<String, String>> bolsaNaoEncontrada(BolsaNaoEncontrada e) {
+        throw new UnsupportedOperationException("não implementado");
+    }
+
+    public ResponseEntity<Map<String, String>> bolsaJaReservada(BolsaJaReservada e) {
+        throw new UnsupportedOperationException("não implementado");
+    }
+
+    public ResponseEntity<Map<String, String>> bolsaVencida(BolsaVencida e) {
+        throw new UnsupportedOperationException("não implementado");
     }
 }
