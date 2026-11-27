@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.github._ndrewss.rota_vital.model.EstatisticaHospital;
-import io.github._ndrewss.rota_vital.model.Requisicao;
+import io.github._ndrewss.rota_vital.requisicao.negocio.dominio.Requisicao;
 import io.github._ndrewss.rota_vital.service.EstatisticaService;
 import io.github._ndrewss.rota_vital.service.HistoricoService;
 import io.github._ndrewss.rota_vital.util.GeradorRequisicoes;

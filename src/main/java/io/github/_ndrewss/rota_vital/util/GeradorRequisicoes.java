@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.SplittableRandom;
 
-import io.github._ndrewss.rota_vital.model.Requisicao;
+import io.github._ndrewss.rota_vital.requisicao.negocio.dominio.Requisicao;
 
 /**
  * Gera listas de {@link Requisicao} com valores aleatórios para testes de carga.

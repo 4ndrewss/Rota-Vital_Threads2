@@ -12,7 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import io.github._ndrewss.rota_vital.model.EstatisticaHospital;
-import io.github._ndrewss.rota_vital.model.Requisicao;
+import io.github._ndrewss.rota_vital.requisicao.negocio.dominio.Requisicao;
 import io.github._ndrewss.rota_vital.util.GeradorRequisicoes;
 
 /**

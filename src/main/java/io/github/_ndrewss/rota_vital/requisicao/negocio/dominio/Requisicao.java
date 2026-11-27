@@ -1,4 +1,4 @@
-package io.github._ndrewss.rota_vital.model;
+package io.github._ndrewss.rota_vital.requisicao.negocio.dominio;
 
 import java.time.LocalDateTime;
 import java.util.Objects;

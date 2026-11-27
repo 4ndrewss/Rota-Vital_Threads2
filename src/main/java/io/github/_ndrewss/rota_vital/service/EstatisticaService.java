@@ -13,7 +13,7 @@ import java.util.concurrent.Future;
 import org.springframework.stereotype.Service;
 
 import io.github._ndrewss.rota_vital.model.EstatisticaHospital;
-import io.github._ndrewss.rota_vital.model.Requisicao;
+import io.github._ndrewss.rota_vital.requisicao.negocio.dominio.Requisicao;
 
 @Service
 public class EstatisticaService {
